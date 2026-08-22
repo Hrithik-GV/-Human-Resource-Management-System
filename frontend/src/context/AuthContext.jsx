@@ -52,11 +52,23 @@ export const AuthProvider = ({ children }) => {
     initAuth();
   }, [refreshUser]);
 
-  const login = async (email, password) => {
+  const login = async (identifier, password) => {
     setLoading(true);
     try {
-      const { user, token } = await authService.login(email, password);
+      const { user, token } = await authService.login(identifier, password);
       localStorage.setItem('dayflow_token', token);
+      localStorage.setItem('dayflow_user', JSON.stringify(user));
+      setCurrentUser(user);
+      return user;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const changePassword = async (currentPassword, newPassword) => {
+    setLoading(true);
+    try {
+      const { user } = await authService.changePassword(currentPassword, newPassword);
       localStorage.setItem('dayflow_user', JSON.stringify(user));
       setCurrentUser(user);
       return user;
@@ -89,8 +101,10 @@ export const AuthProvider = ({ children }) => {
     currentUser,
     role: currentUser?.role || null,
     isAuthenticated: !!currentUser,
+    mustChangePassword: !!currentUser?.mustChangePassword,
     loading,
     login,
+    changePassword,
     register,
     logout,
     refreshUser,

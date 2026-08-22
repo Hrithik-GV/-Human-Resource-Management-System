@@ -1,7 +1,7 @@
 import React, { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 
-// Layouts (Static for fast shell render)
+// Layouts
 import { AuthLayout } from '../layouts/AuthLayout';
 import { EmployeeLayout } from '../layouts/EmployeeLayout';
 import { AdminLayout } from '../layouts/AdminLayout';
@@ -15,6 +15,7 @@ import { ProtectedRoute } from './ProtectedRoute';
 // Lazy-loaded Pages
 const Login = lazy(() => import('../pages/auth/Login').then(m => ({ default: m.Login })));
 const Register = lazy(() => import('../pages/auth/Register').then(m => ({ default: m.Register })));
+const ChangePassword = lazy(() => import('../pages/auth/ChangePassword').then(m => ({ default: m.ChangePassword })));
 
 const EmployeeDashboard = lazy(() => import('../pages/employee/EmployeeDashboard').then(m => ({ default: m.EmployeeDashboard })));
 const EmployeeProfile = lazy(() => import('../pages/employee/EmployeeProfile').then(m => ({ default: m.EmployeeProfile })));
@@ -24,6 +25,7 @@ const EmployeePayroll = lazy(() => import('../pages/employee/EmployeePayroll').t
 
 const AdminDashboard = lazy(() => import('../pages/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
 const AdminEmployees = lazy(() => import('../pages/admin/AdminEmployees').then(m => ({ default: m.AdminEmployees })));
+const CreateEmployee = lazy(() => import('../pages/admin/CreateEmployee').then(m => ({ default: m.CreateEmployee })));
 const AdminAttendance = lazy(() => import('../pages/admin/AdminAttendance').then(m => ({ default: m.AdminAttendance })));
 const AdminLeaves = lazy(() => import('../pages/admin/AdminLeaves').then(m => ({ default: m.AdminLeaves })));
 const AdminPayroll = lazy(() => import('../pages/admin/AdminPayroll').then(m => ({ default: m.AdminPayroll })));
@@ -38,10 +40,17 @@ export const AppRoutes = () => {
         {/* Root redirect */}
         <Route path="/" element={<Navigate to="/login" replace />} />
 
-        {/* Auth Routes */}
+        {/* Public Auth Routes */}
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+        </Route>
+
+        {/* Protected Password Change Route (accessible when authenticated & mustChangePassword is true) */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<AuthLayout />}>
+            <Route path="/change-password" element={<ChangePassword />} />
+          </Route>
         </Route>
 
         {/* Employee Routes */}
@@ -64,6 +73,7 @@ export const AppRoutes = () => {
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="profile" element={<EmployeeProfile />} />
             <Route path="employees" element={<AdminEmployees />} />
+            <Route path="create-employee" element={<CreateEmployee />} />
             <Route path="attendance" element={<AdminAttendance />} />
             <Route path="leaves" element={<AdminLeaves />} />
             <Route path="payroll" element={<AdminPayroll />} />

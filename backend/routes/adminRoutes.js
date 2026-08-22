@@ -4,6 +4,7 @@ import {
   getAllUsers,
   getUserById,
   deleteUser,
+  createEmployee,
 } from '../controllers/adminController.js';
 import { protect } from '../middleware/authMiddleware.js';
 import { isAdmin } from '../middleware/roleMiddleware.js';
@@ -15,6 +16,7 @@ router.use(protect, isAdmin);
 
 router.get('/dashboard', getAdminDashboard);
 router.get('/users', getAllUsers);
+router.post('/create-employee', createEmployee);
 router.get('/users/:id', getUserById);
 router.delete('/users/:id', deleteUser);
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 import {
   Users,
   Plus,
@@ -33,6 +34,7 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { adminService } from '../../services/adminService';
 
 export const AdminEmployees = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [employees, setEmployees] = useState([]);
   const [search, setSearch] = useState('');
@@ -140,12 +142,9 @@ export const AdminEmployees = () => {
           variant="primary"
           size="md"
           leftIcon={<Plus className="w-4 h-4" />}
-          onClick={() => {
-            addForm.reset();
-            setIsAddModalOpen(true);
-          }}
+          onClick={() => navigate('/admin/create-employee')}
         >
-          Add Employee
+          Create Employee
         </Button>
       }
     >

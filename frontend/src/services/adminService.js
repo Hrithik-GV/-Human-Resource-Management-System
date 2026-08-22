@@ -4,10 +4,14 @@ const normalizeUser = (user) => ({
   ...user,
   id: user._id,
   fullName: user.name,
+  loginId: user.loginId || user.employeeId,
   position: user.designation,
   role: user.role?.toLowerCase(),
   status: 'Active',
   avatar: user.profilePicture,
+  mustChangePassword: !!user.mustChangePassword,
+  companyName: user.companyName || '',
+  companyLogo: user.companyLogo || '',
 });
 
 const normalizeAttendance = (record) => ({
@@ -73,25 +77,27 @@ export const adminService = {
   }, 'Failed to fetch employee details'),
 
   createEmployee: (data) => request(async () => {
-    const response = await api.post('/auth/register', {
-      employeeId: data.employeeId,
-      name: data.fullName,
+    // Calls new admin create-employee endpoint
+    const response = await api.post('/admin/create-employee', {
+      companyName: data.companyName,
+      companyLogo: data.companyLogo,
+      name: data.fullName || data.name,
       email: data.email,
-      password: data.password || 'ChangeMe123',
-      role: 'Employee',
+      phone: data.phone,
       department: data.department || 'General',
       designation: data.position || data.designation || 'Employee',
-      phone: data.phone || '0000000000',
-      address: data.address || 'Not provided',
+      joiningYear: data.joiningYear || new Date().getFullYear(),
     });
-    return normalizeUser(response.data.user);
+    return {
+      user: normalizeUser(response.data.user),
+      loginId: response.data.loginId,
+      temporaryPassword: response.data.temporaryPassword,
+    };
   }, 'Failed to create employee'),
 
   addEmployee: (data) => adminService.createEmployee(data),
 
   updateEmployee: (_id, _data) => request(async () => {
-    // The backend admin module does not support general employee profile updates.
-    // Salary updates are routed through the payroll endpoint.
     if (_data.salary !== undefined || _data.basicSalary !== undefined) {
       const basicSalary = Number(_data.basicSalary || _data.salary || 0);
       const response = await api.put(`/payroll/${_id}`, {
@@ -101,7 +107,6 @@ export const adminService = {
       });
       return normalizePayroll(response.data.payroll);
     }
-    // No-op for non-salary fields — profile picture changes not supported via admin route
     return true;
   }, 'Failed to update employee record'),
 

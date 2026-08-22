@@ -67,6 +67,25 @@ const userSchema = new mongoose.Schema(
       default: '',
       trim: true,
     },
+    loginId: {
+      type: String,
+      unique: true,
+      sparse: true,
+      trim: true,
+    },
+    mustChangePassword: {
+      type: Boolean,
+      default: false,
+    },
+    companyName: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    companyLogo: {
+      type: String,
+      default: '',
+    },
   },
   {
     timestamps: true,

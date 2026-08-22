@@ -1,10 +1,11 @@
 import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 
 export const ProtectedRoute = ({ allowedRole }) => {
-  const { isAuthenticated, role, loading } = useAuth();
+  const { isAuthenticated, role, mustChangePassword, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return <LoadingSpinner fullPage label="Authenticating session..." />;
@@ -12,6 +13,11 @@ export const ProtectedRoute = ({ allowedRole }) => {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Force Change Password flow on first login
+  if (mustChangePassword && location.pathname !== '/change-password') {
+    return <Navigate to="/change-password" replace />;
   }
 
   if (allowedRole && role !== allowedRole.toLowerCase()) {

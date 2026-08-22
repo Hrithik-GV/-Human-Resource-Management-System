@@ -1,3 +1,4 @@
+
 import {
   LayoutDashboard,
   User,
@@ -5,6 +6,7 @@ import {
   CalendarDays,
   CreditCard,
   Users,
+  UserPlus,
   FileCheck,
   Settings,
   LogOut
@@ -21,6 +23,7 @@ export const EMPLOYEE_NAV_ITEMS = [
 export const ADMIN_NAV_ITEMS = [
   { label: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
   { label: 'Employees', path: '/admin/employees', icon: Users },
+  { label: 'Create Employee', path: '/admin/create-employee', icon: UserPlus },
   { label: 'Attendance', path: '/admin/attendance', icon: Clock },
   { label: 'Leave Requests', path: '/admin/leaves', icon: FileCheck },
   { label: 'Payroll', path: '/admin/payroll', icon: CreditCard },
@@ -40,10 +43,12 @@ export const PAGE_TITLES = {
   '/admin/dashboard': 'Admin Dashboard',
   '/admin/profile': 'Admin Profile',
   '/admin/employees': 'Employee Directory',
+  '/admin/create-employee': 'Create Employee',
   '/admin/attendance': 'Attendance Overview',
   '/admin/leaves': 'Leave Requests Management',
   '/admin/payroll': 'Payroll Administration',
   '/login': 'Sign In',
-  '/register': 'Create Account',
+  '/register': 'Create Employee (Admin Only)',
+  '/change-password': 'Change Temporary Password',
   '/settings': 'Account Settings',
 };

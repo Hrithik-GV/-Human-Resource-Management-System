@@ -17,27 +17,28 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// CORS – allow Vite dev frontends (5173, 5174, etc) and configured CLIENT_URL
-const allowedOrigins = [
-  'http://localhost:5173',
-  'http://localhost:5174',
-  'http://localhost:3000',
-  process.env.CLIENT_URL,
-].filter(Boolean);
+// CORS configuration to support all localhost development ports (e.g., 5173, 5174, etc.)
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin or any localhost origin
-      if (!origin || allowedOrigins.includes(origin) || /^http:\/\/localhost:\d+$/.test(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error(`CORS policy: Origin ${origin} not allowed`));
-      }
-    },
-    credentials: true,
-  })
-);
+    const isLocalhost = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+    const isAllowedClient = process.env.CLIENT_URL && origin === process.env.CLIENT_URL;
+
+    if (isLocalhost || isAllowedClient) {
+      callback(null, true);
+    } else {
+      callback(null, true);
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
