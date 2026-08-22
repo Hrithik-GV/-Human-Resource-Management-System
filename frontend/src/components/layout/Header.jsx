@@ -25,7 +25,7 @@ export const Header = ({ onToggleMobileSidebar = () => {} }) => {
 
   const dropdownItems = [
     {
-      label: 'Profile',
+      label: 'My Profile',
       icon: User,
       onClick: () => navigate(role === 'admin' ? '/admin/profile' : '/employee/profile'),
     },
