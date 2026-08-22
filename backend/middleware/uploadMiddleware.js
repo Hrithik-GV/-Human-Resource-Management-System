@@ -1,38 +1,45 @@
 import multer from 'multer';
 import path from 'path';
+import fs from 'fs';
 
-// Multer storage configuration for file uploads
+// Ensure uploads directory exists
+const uploadDir = 'uploads/';
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Configure storage destination and file naming strategy
 const storage = multer.diskStorage({
   destination(req, file, cb) {
-    cb(null, 'uploads/');
+    cb(null, uploadDir);
   },
   filename(req, file, cb) {
-    cb(
-      null,
-      `${file.fieldname}-${Date.now()}${path.extname(file.originalname)}`
-    );
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    const ext = path.extname(file.originalname).toLowerCase();
+    cb(null, `profile-${uniqueSuffix}${ext}`);
   },
 });
 
-// Filter to accept images only
+// File filter validation for JPEG, PNG, and WEBP
 const fileFilter = (req, file, cb) => {
-  const filetypes = /jpe?g|png|webp/;
-  const mimetypes = /image\/jpeg|image\/png|image\/webp/;
+  const allowedExtensions = /jpeg|jpg|png|webp/;
+  const extName = allowedExtensions.test(path.extname(file.originalname).toLowerCase());
+  const mimeType = allowedExtensions.test(file.mimetype);
 
-  const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-  const mimetype = mimetypes.test(file.mimetype);
-
-  if (extname && mimetype) {
-    return cb(null, true);
+  if (extName && mimeType) {
+    cb(null, true);
   } else {
-    cb(new Error('Only image files (jpeg, jpg, png, webp) are allowed!'), false);
+    cb(new Error('Invalid file type. Only JPEG, PNG, and WEBP images are allowed'), false);
   }
 };
 
+// Multer middleware with 5MB file size limit
 const upload = multer({
   storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5 MB limit
+  },
   fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max file size
 });
 
 export default upload;

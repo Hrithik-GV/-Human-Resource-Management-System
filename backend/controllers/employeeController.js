@@ -64,6 +64,45 @@ export const updateEmployeeProfile = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Upload / Update employee profile picture
+// @route   PUT /api/employee/profile-picture
+// @access  Private / Employee
+export const updateProfilePicture = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    res.status(400);
+    throw new Error('Please upload an image file');
+  }
+
+  const user = await User.findById(req.user._id);
+
+  if (!user) {
+    res.status(404);
+    throw new Error('Employee profile not found');
+  }
+
+  // Normalize path to use forward slashes
+  const filePath = req.file.path.replace(/\\/g, '/');
+  user.profilePicture = filePath;
+
+  await user.save();
+
+  res.status(200).json({
+    success: true,
+    message: 'Profile picture updated successfully',
+    profilePicture: user.profilePicture,
+    user: {
+      _id: user._id,
+      employeeId: user.employeeId,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      department: user.department,
+      designation: user.designation,
+      profilePicture: user.profilePicture,
+    },
+  });
+});
+
 // @desc    Get employee dashboard summary
 // @route   GET /api/employee/dashboard
 // @access  Private / Employee
