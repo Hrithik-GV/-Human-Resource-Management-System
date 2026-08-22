@@ -7,7 +7,19 @@ export const authService = {
     // Simulated delay for network request
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    const user = employeesList.find(
+    let list = employeesList;
+    if (!list || list.length === 0) {
+      const stored = localStorage.getItem("dayflow_employees");
+      if (stored) {
+        list = JSON.parse(stored);
+      } else {
+        // Fallback to hardcoded list if localStorage is not set yet
+        const { initialEmployees } = await import("../data/employees");
+        list = initialEmployees;
+      }
+    }
+
+    const user = list.find(
       (emp) => emp.email.toLowerCase() === email.toLowerCase()
     );
 
