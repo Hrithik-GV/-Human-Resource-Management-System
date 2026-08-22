@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import {
   User,
@@ -6,7 +6,6 @@ import {
   Lock,
   Globe,
   Sliders,
-  CheckCircle2,
   ShieldCheck,
   Moon,
   Sun,
@@ -37,6 +36,19 @@ export const SettingsPage = () => {
     },
   });
 
+  // Keep Account Form synced with currentUser
+  useEffect(() => {
+    if (currentUser) {
+      accountForm.reset({
+        fullName: currentUser.fullName || '',
+        email: currentUser.email || '',
+        phone: currentUser.phone || '+1 (555) 234-5678',
+        language: 'en-US',
+        timezone: 'America/Los_Angeles',
+      });
+    }
+  }, [currentUser, accountForm]);
+
   // Notification Settings State
   const [notifications, setNotifications] = useState({
     emailAlerts: true,
@@ -57,7 +69,7 @@ export const SettingsPage = () => {
 
   // System Preferences State
   const [preferences, setPreferences] = useState({
-    theme: 'light',
+    theme: localStorage.getItem('dayflow_theme') || 'light',
     density: 'comfortable',
     defaultLanding: role === 'admin' ? '/admin/dashboard' : '/employee/dashboard',
   });
@@ -79,30 +91,51 @@ export const SettingsPage = () => {
     }
   };
 
-  const handleNotificationToggle = (key) => {
-    setNotifications((prev) => {
-      const updated = { ...prev, [key]: !prev[key] };
-      toast.success('Notification preference updated.');
-      return updated;
-    });
+  const handleAccountFormError = (errors) => {
+    const firstErrKey = Object.keys(errors)[0];
+    if (firstErrKey) {
+      toast.error(errors[firstErrKey]?.message || 'Please fill in required account fields.');
+    }
   };
 
-  const handleSecuritySubmit = async (formData) => {
+  const handleNotificationToggle = (key) => {
+    setNotifications((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const handleSaveNotifications = () => {
+    localStorage.setItem('dayflow_notifications', JSON.stringify(notifications));
+    toast.success('Notification preferences saved!');
+  };
+
+  const handleSecuritySubmit = async () => {
     try {
-      if (formData.newPassword !== formData.confirmPassword) {
-        toast.error('New passwords do not match.');
-        return;
-      }
       securityForm.reset();
-      toast.success('Security password changed successfully!');
+      toast.success('Security password updated successfully!');
     } catch (err) {
       toast.error('Failed to update security password.');
     }
   };
 
+  const handleSecurityFormError = (errors) => {
+    const firstErrKey = Object.keys(errors)[0];
+    if (firstErrKey) {
+      toast.error(errors[firstErrKey]?.message || 'Please check security password fields.');
+    }
+  };
+
   const handlePreferenceChange = (key, value) => {
-    setPreferences((prev) => ({ ...prev, [key]: value }));
-    toast.success('Preference updated.');
+    setPreferences((prev) => {
+      const updated = { ...prev, [key]: value };
+      if (key === 'theme') {
+        localStorage.setItem('dayflow_theme', value);
+      }
+      return updated;
+    });
+  };
+
+  const handleSavePreferences = () => {
+    localStorage.setItem('dayflow_preferences', JSON.stringify(preferences));
+    toast.success('System preferences saved successfully!');
   };
 
   const tabsConfig = [
@@ -136,7 +169,7 @@ export const SettingsPage = () => {
               </CardTitle>
               <CardDescription>Update your personal identity details and contact preferences</CardDescription>
             </CardHeader>
-            <form onSubmit={accountForm.handleSubmit(handleAccountSubmit)}>
+            <form onSubmit={accountForm.handleSubmit(handleAccountSubmit, handleAccountFormError)}>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Input
@@ -158,11 +191,12 @@ export const SettingsPage = () => {
                     label="Phone Number"
                     placeholder="+1 (555) 234-5678"
                     error={accountForm.formState.errors.phone?.message}
-                    {...accountForm.register('phone')}
+                    {...accountForm.register('phone', { required: 'Phone number is required' })}
                   />
 
                   <Select
                     label="Preferred Language"
+                    placeholder=""
                     options={[
                       { label: 'English (US)', value: 'en-US' },
                       { label: 'Spanish (ES)', value: 'es-ES' },
@@ -175,6 +209,7 @@ export const SettingsPage = () => {
 
                 <Select
                   label="Timezone"
+                  placeholder=""
                   options={[
                     { label: 'Pacific Time (US & Canada) (GMT-08:00)', value: 'America/Los_Angeles' },
                     { label: 'Eastern Time (US & Canada) (GMT-05:00)', value: 'America/New_York' },
@@ -186,8 +221,14 @@ export const SettingsPage = () => {
               </CardContent>
 
               <CardFooter className="justify-end gap-3">
-                <Button type="submit" variant="primary" size="md" leftIcon={<Save className="w-4 h-4" />}>
-                  Save Changes
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="md"
+                  isLoading={accountForm.formState.isSubmitting}
+                  leftIcon={<Save className="w-4 h-4" />}
+                >
+                  Save Account Changes
                 </Button>
               </CardFooter>
             </form>
@@ -204,7 +245,10 @@ export const SettingsPage = () => {
               <CardDescription>Choose how and when you receive automated HR system alerts</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
+              <div
+                onClick={() => handleNotificationToggle('emailAlerts')}
+                className="flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100/80 rounded-xl border border-slate-200 cursor-pointer transition-colors"
+              >
                 <div className="space-y-0.5">
                   <h4 className="text-xs font-bold text-slate-800">Email Notifications</h4>
                   <p className="text-[11px] text-slate-500">Receive important updates and leave approvals directly via email</p>
@@ -212,12 +256,15 @@ export const SettingsPage = () => {
                 <input
                   type="checkbox"
                   checked={notifications.emailAlerts}
-                  onChange={() => handleNotificationToggle('emailAlerts')}
-                  className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                  onChange={() => {}}
+                  className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 pointer-events-none"
                 />
               </div>
 
-              <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
+              <div
+                onClick={() => handleNotificationToggle('attendanceReminders')}
+                className="flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100/80 rounded-xl border border-slate-200 cursor-pointer transition-colors"
+              >
                 <div className="space-y-0.5">
                   <h4 className="text-xs font-bold text-slate-800">Daily Attendance Reminders</h4>
                   <p className="text-[11px] text-slate-500">Get notified if you forget to check in or check out</p>
@@ -225,12 +272,15 @@ export const SettingsPage = () => {
                 <input
                   type="checkbox"
                   checked={notifications.attendanceReminders}
-                  onChange={() => handleNotificationToggle('attendanceReminders')}
-                  className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                  onChange={() => {}}
+                  className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 pointer-events-none"
                 />
               </div>
 
-              <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
+              <div
+                onClick={() => handleNotificationToggle('leaveUpdates')}
+                className="flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100/80 rounded-xl border border-slate-200 cursor-pointer transition-colors"
+              >
                 <div className="space-y-0.5">
                   <h4 className="text-xs font-bold text-slate-800">Leave Request Status Updates</h4>
                   <p className="text-[11px] text-slate-500">Instant notification when a manager approves or rejects a request</p>
@@ -238,12 +288,15 @@ export const SettingsPage = () => {
                 <input
                   type="checkbox"
                   checked={notifications.leaveUpdates}
-                  onChange={() => handleNotificationToggle('leaveUpdates')}
-                  className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                  onChange={() => {}}
+                  className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 pointer-events-none"
                 />
               </div>
 
-              <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
+              <div
+                onClick={() => handleNotificationToggle('payrollDigest')}
+                className="flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100/80 rounded-xl border border-slate-200 cursor-pointer transition-colors"
+              >
                 <div className="space-y-0.5">
                   <h4 className="text-xs font-bold text-slate-800">Monthly Payroll Digest</h4>
                   <p className="text-[11px] text-slate-500">Alerts when monthly salary payslips are generated</p>
@@ -251,11 +304,23 @@ export const SettingsPage = () => {
                 <input
                   type="checkbox"
                   checked={notifications.payrollDigest}
-                  onChange={() => handleNotificationToggle('payrollDigest')}
-                  className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                  onChange={() => {}}
+                  className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 pointer-events-none"
                 />
               </div>
             </CardContent>
+
+            <CardFooter className="justify-end gap-3">
+              <Button
+                type="button"
+                onClick={handleSaveNotifications}
+                variant="primary"
+                size="md"
+                leftIcon={<Save className="w-4 h-4" />}
+              >
+                Save Preferences
+              </Button>
+            </CardFooter>
           </Card>
         )}
 
@@ -268,7 +333,7 @@ export const SettingsPage = () => {
               </CardTitle>
               <CardDescription>Update your account password and security authentication parameters</CardDescription>
             </CardHeader>
-            <form onSubmit={securityForm.handleSubmit(handleSecuritySubmit)}>
+            <form onSubmit={securityForm.handleSubmit(handleSecuritySubmit, handleSecurityFormError)}>
               <CardContent className="space-y-4">
                 <Input
                   label="Current Password"
@@ -295,7 +360,10 @@ export const SettingsPage = () => {
                     type="password"
                     placeholder="••••••••"
                     error={securityForm.formState.errors.confirmPassword?.message}
-                    {...securityForm.register('confirmPassword', { required: 'Please confirm new password' })}
+                    {...securityForm.register('confirmPassword', {
+                      required: 'Please confirm new password',
+                      validate: (val) => val === securityForm.watch('newPassword') || 'Passwords do not match',
+                    })}
                   />
                 </div>
 
@@ -306,7 +374,13 @@ export const SettingsPage = () => {
               </CardContent>
 
               <CardFooter className="justify-end gap-3">
-                <Button type="submit" variant="primary" size="md" leftIcon={<KeyRound className="w-4 h-4" />}>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="md"
+                  isLoading={securityForm.formState.isSubmitting}
+                  leftIcon={<KeyRound className="w-4 h-4" />}
+                >
                   Update Password
                 </Button>
               </CardFooter>
@@ -332,7 +406,7 @@ export const SettingsPage = () => {
                   <button
                     type="button"
                     onClick={() => handlePreferenceChange('theme', 'light')}
-                    className={`p-3 rounded-xl border flex flex-col items-center gap-2 text-xs font-semibold transition-all ${
+                    className={`p-3 rounded-xl border flex flex-col items-center gap-2 text-xs font-semibold transition-all cursor-pointer ${
                       preferences.theme === 'light'
                         ? 'border-indigo-600 bg-indigo-50 text-indigo-700 shadow-xs'
                         : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
@@ -345,7 +419,7 @@ export const SettingsPage = () => {
                   <button
                     type="button"
                     onClick={() => handlePreferenceChange('theme', 'dark')}
-                    className={`p-3 rounded-xl border flex flex-col items-center gap-2 text-xs font-semibold transition-all ${
+                    className={`p-3 rounded-xl border flex flex-col items-center gap-2 text-xs font-semibold transition-all cursor-pointer ${
                       preferences.theme === 'dark'
                         ? 'border-indigo-600 bg-indigo-50 text-indigo-700 shadow-xs'
                         : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
@@ -358,7 +432,7 @@ export const SettingsPage = () => {
                   <button
                     type="button"
                     onClick={() => handlePreferenceChange('theme', 'system')}
-                    className={`p-3 rounded-xl border flex flex-col items-center gap-2 text-xs font-semibold transition-all ${
+                    className={`p-3 rounded-xl border flex flex-col items-center gap-2 text-xs font-semibold transition-all cursor-pointer ${
                       preferences.theme === 'system'
                         ? 'border-indigo-600 bg-indigo-50 text-indigo-700 shadow-xs'
                         : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
@@ -372,6 +446,7 @@ export const SettingsPage = () => {
 
               <Select
                 label="Default Landing Page"
+                placeholder=""
                 value={preferences.defaultLanding}
                 onChange={(e) => handlePreferenceChange('defaultLanding', e.target.value)}
                 options={
@@ -389,6 +464,18 @@ export const SettingsPage = () => {
                 }
               />
             </CardContent>
+
+            <CardFooter className="justify-end gap-3">
+              <Button
+                type="button"
+                onClick={handleSavePreferences}
+                variant="primary"
+                size="md"
+                leftIcon={<Save className="w-4 h-4" />}
+              >
+                Save Preferences
+              </Button>
+            </CardFooter>
           </Card>
         )}
       </div>
