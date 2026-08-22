@@ -10,11 +10,13 @@ const userSchema = new mongoose.Schema(
       required: [true, 'Employee ID is required'],
       unique: true,
       trim: true,
+      minlength: [2, 'Employee ID must be at least 2 characters long'],
     },
     name: {
       type: String,
       required: [true, 'Name is required'],
       trim: true,
+      minlength: [2, 'Name must be at least 2 characters long'],
     },
     email: {
       type: String,
@@ -22,10 +24,15 @@ const userSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
+      match: [
+        /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,})+$/,
+        'Please provide a valid email address',
+      ],
     },
     password: {
       type: String,
       required: [true, 'Password is required'],
+      minlength: [6, 'Password must be at least 6 characters long'],
     },
     role: {
       type: String,
@@ -49,6 +56,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Phone number is required'],
       trim: true,
+      match: [
+        /^\+?[0-9]{7,15}$/,
+        'Please provide a valid phone number (7 to 15 digits)',
+      ],
     },
     address: {
       type: String,

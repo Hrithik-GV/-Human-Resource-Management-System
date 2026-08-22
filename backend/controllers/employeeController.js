@@ -34,9 +34,18 @@ export const updateEmployeeProfile = asyncHandler(async (req, res) => {
 
   const { phone, address, department, designation, profilePicture, name } = req.body;
 
+  // Validate phone number if provided
+  if (phone !== undefined) {
+    const phoneRegex = /^\+?[0-9]{7,15}$/;
+    if (!phoneRegex.test(phone)) {
+      res.status(400);
+      throw new Error('Please provide a valid phone number (7 to 15 digits)');
+    }
+    user.phone = phone;
+  }
+
   // Update allowed fields only (prevent modifications to role, password, employeeId, email)
   if (name !== undefined) user.name = name;
-  if (phone !== undefined) user.phone = phone;
   if (address !== undefined) user.address = address;
   if (department !== undefined) user.department = department;
   if (designation !== undefined) user.designation = designation;
@@ -80,7 +89,6 @@ export const updateProfilePicture = asyncHandler(async (req, res) => {
     throw new Error('Employee profile not found');
   }
 
-  // Normalize path to use forward slashes
   const filePath = req.file.path.replace(/\\/g, '/');
   user.profilePicture = filePath;
 
@@ -115,7 +123,6 @@ export const getEmployeeDashboard = asyncHandler(async (req, res) => {
     throw new Error('Employee profile not found');
   }
 
-  // Fetch summary counts for dashboard
   const totalAttendanceCount = await Attendance.countDocuments({ employee: employeeId });
   const pendingLeaveCount = await Leave.countDocuments({
     employee: employeeId,

@@ -33,6 +33,14 @@ export const checkIn = asyncHandler(async (req, res) => {
 
   const { status } = req.body;
 
+  if (status) {
+    const validStatuses = ['Present', 'Absent', 'Half Day', 'Leave'];
+    if (!validStatuses.includes(status)) {
+      res.status(400);
+      throw new Error(`Invalid status. Must be one of: ${validStatuses.join(', ')}`);
+    }
+  }
+
   const attendance = await Attendance.create({
     employee: req.user._id,
     date: new Date(),
@@ -89,9 +97,20 @@ export const getMyAttendance = asyncHandler(async (req, res) => {
 
   if (startDate || endDate) {
     filter.date = {};
-    if (startDate) filter.date.$gte = new Date(startDate);
+    if (startDate) {
+      const start = new Date(startDate);
+      if (isNaN(start.getTime())) {
+        res.status(400);
+        throw new Error('Invalid startDate format');
+      }
+      filter.date.$gte = start;
+    }
     if (endDate) {
       const { end } = getDayBounds(endDate);
+      if (isNaN(end.getTime())) {
+        res.status(400);
+        throw new Error('Invalid endDate format');
+      }
       filter.date.$lte = end;
     }
   }
@@ -136,12 +155,27 @@ export const getAllAttendance = asyncHandler(async (req, res) => {
   // Filter by single date or date range
   if (date) {
     const { start, end } = getDayBounds(date);
+    if (isNaN(start.getTime())) {
+      res.status(400);
+      throw new Error('Invalid date format');
+    }
     filter.date = { $gte: start, $lte: end };
   } else if (startDate || endDate) {
     filter.date = {};
-    if (startDate) filter.date.$gte = new Date(startDate);
+    if (startDate) {
+      const start = new Date(startDate);
+      if (isNaN(start.getTime())) {
+        res.status(400);
+        throw new Error('Invalid startDate format');
+      }
+      filter.date.$gte = start;
+    }
     if (endDate) {
       const { end } = getDayBounds(endDate);
+      if (isNaN(end.getTime())) {
+        res.status(400);
+        throw new Error('Invalid endDate format');
+      }
       filter.date.$lte = end;
     }
   }

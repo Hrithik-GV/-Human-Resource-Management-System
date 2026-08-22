@@ -63,6 +63,16 @@ export const updatePayroll = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { basicSalary, bonus, deductions, employee } = req.body;
 
+  // Validate non-negative inputs
+  if (
+    (basicSalary !== undefined && (isNaN(basicSalary) || Number(basicSalary) < 0)) ||
+    (bonus !== undefined && (isNaN(bonus) || Number(bonus) < 0)) ||
+    (deductions !== undefined && (isNaN(deductions) || Number(deductions) < 0))
+  ) {
+    res.status(400);
+    throw new Error('Salary components (basicSalary, bonus, deductions) must be non-negative numbers');
+  }
+
   // Try finding payroll by Payroll ID
   let payroll = await Payroll.findById(id);
 

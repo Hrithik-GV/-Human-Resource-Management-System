@@ -42,18 +42,31 @@ export const registerUser = asyncHandler(async (req, res) => {
     throw new Error('Please provide a valid email address');
   }
 
+  // Validate password length
+  if (password.length < 6) {
+    res.status(400);
+    throw new Error('Password must be at least 6 characters long');
+  }
+
+  // Validate phone number format
+  const phoneRegex = /^\+?[0-9]{7,15}$/;
+  if (!phoneRegex.test(phone)) {
+    res.status(400);
+    throw new Error('Please provide a valid phone number (7 to 15 digits)');
+  }
+
   // Check if email already exists
   const existingEmail = await User.findOne({ email: email.toLowerCase() });
   if (existingEmail) {
-    res.status(409);
-    throw new Error('User with this email already exists');
+    res.status(400);
+    throw new Error('User with this email address already exists');
   }
 
   // Check if employeeId already exists
   const existingEmployeeId = await User.findOne({ employeeId });
   if (existingEmployeeId) {
-    res.status(409);
-    throw new Error('User with this employeeId already exists');
+    res.status(400);
+    throw new Error('User with this Employee ID already exists');
   }
 
   // Hash password
@@ -111,7 +124,14 @@ export const loginUser = asyncHandler(async (req, res) => {
   // Validate input
   if (!email || !password) {
     res.status(400);
-    throw new Error('Please provide email and password');
+    throw new Error('Please provide both email and password');
+  }
+
+  // Validate email format
+  const emailRegex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,})+$/;
+  if (!emailRegex.test(email)) {
+    res.status(400);
+    throw new Error('Please provide a valid email address');
   }
 
   // Find user by email
