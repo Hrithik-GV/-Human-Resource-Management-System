@@ -44,26 +44,22 @@ const userSchema = new mongoose.Schema(
     },
     department: {
       type: String,
-      required: [true, 'Department is required'],
+      default: 'General',
       trim: true,
     },
     designation: {
       type: String,
-      required: [true, 'Designation is required'],
+      default: 'Employee',
       trim: true,
     },
     phone: {
       type: String,
-      required: [true, 'Phone number is required'],
+      default: '0000000000',
       trim: true,
-      match: [
-        /^\+?[0-9]{7,15}$/,
-        'Please provide a valid phone number (7 to 15 digits)',
-      ],
     },
     address: {
       type: String,
-      required: [true, 'Address is required'],
+      default: 'Not provided',
       trim: true,
     },
     profilePicture: {

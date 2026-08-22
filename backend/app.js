@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 
 // Route imports
@@ -10,12 +12,36 @@ import leaveRoutes from './routes/leaveRoutes.js';
 import payrollRoutes from './routes/payrollRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 
-// Middlewares
-app.use(cors());
+// CORS – allow the Vite dev frontend and any configured VITE_API_URL origin
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  process.env.CLIENT_URL,
+].filter(Boolean);
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (e.g., Postman, server-to-server)
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`CORS policy: Origin ${origin} not allowed`));
+      }
+    },
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve uploaded profile pictures
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Health Check / Root route
 app.get('/', (req, res) => {

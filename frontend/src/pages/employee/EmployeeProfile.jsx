@@ -25,11 +25,21 @@ import { Input } from '../../components/ui/Input';
 import { Modal } from '../../components/ui/Modal';
 import { SkeletonLoader } from '../../components/ui/SkeletonLoader';
 import { employeeService } from '../../services/employeeService';
+import { payrollService } from '../../services/payrollService';
 import { useAuth } from '../../context/AuthContext';
+
+const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
+
+const resolveAvatar = (path) => {
+  if (!path) return '';
+  if (path.startsWith('http')) return path;
+  return `${API_BASE}/${path}`;
+};
 
 export const EmployeeProfile = () => {
   const { refreshUser } = useAuth();
   const [profile, setProfile] = useState(null);
+  const [payroll, setPayroll] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
@@ -47,8 +57,12 @@ export const EmployeeProfile = () => {
   const fetchProfile = async () => {
     try {
       setLoading(true);
-      const data = await employeeService.getProfile();
+      const [data, payData] = await Promise.all([
+        employeeService.getProfile(),
+        payrollService.getSalarySummary(),
+      ]);
       setProfile(data);
+      setPayroll(payData);
       reset({
         phone: data.phone || '',
         address: data.address || '',
@@ -111,7 +125,7 @@ export const EmployeeProfile = () => {
           <CardContent className="p-6 flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left">
               <Avatar
-                src={profile?.avatar}
+                src={resolveAvatar(profile?.avatar)}
                 name={profile?.fullName}
                 size="xl"
                 className="ring-4 ring-indigo-50 shrink-0"
@@ -243,19 +257,19 @@ export const EmployeeProfile = () => {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
                 <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
                   <span className="text-xs text-slate-500 block font-medium">Basic Salary</span>
-                  <span className="text-base font-extrabold text-slate-900">${profile?.basicSalary.toLocaleString()}</span>
+                  <span className="text-base font-extrabold text-slate-900">${(payroll?.basicSalary || 0).toLocaleString()}</span>
                 </div>
                 <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                  <span className="text-xs text-slate-500 block font-medium">Allowances</span>
-                  <span className="text-base font-extrabold text-emerald-600">+${profile?.allowances.toLocaleString()}</span>
+                  <span className="text-xs text-slate-500 block font-medium">Gross Salary</span>
+                  <span className="text-base font-extrabold text-emerald-600">${(payroll?.grossSalary || 0).toLocaleString()}</span>
                 </div>
                 <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
                   <span className="text-xs text-slate-500 block font-medium">Bonus</span>
-                  <span className="text-base font-extrabold text-indigo-600">+${profile?.bonus.toLocaleString()}</span>
+                  <span className="text-base font-extrabold text-indigo-600">+${(payroll?.bonus || 0).toLocaleString()}</span>
                 </div>
                 <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
                   <span className="text-xs text-slate-500 block font-medium">Net Salary</span>
-                  <span className="text-base font-extrabold text-slate-900">${profile?.netSalary.toLocaleString()}</span>
+                  <span className="text-base font-extrabold text-slate-900">${(payroll?.netSalary || 0).toLocaleString()}</span>
                 </div>
               </div>
             </CardContent>
@@ -270,22 +284,26 @@ export const EmployeeProfile = () => {
             </CardHeader>
             <CardContent className="p-6">
               <div className="space-y-3">
-                {profile?.documents.map((doc, i) => (
-                  <div key={i} className="flex items-center justify-between p-3 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
-                        <FileText className="w-4 h-4" />
+                {(profile?.documents || []).length === 0 ? (
+                  <p className="text-xs text-slate-400 text-center py-4">No documents uploaded yet.</p>
+                ) : (
+                  (profile?.documents || []).map((doc, i) => (
+                    <div key={i} className="flex items-center justify-between p-3 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                          <FileText className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-slate-800">{doc.name}</p>
+                          <p className="text-[10px] text-slate-400">{doc.size} • Uploaded on {doc.date}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-xs font-semibold text-slate-800">{doc.name}</p>
-                        <p className="text-[10px] text-slate-400">{doc.size} • Uploaded on {doc.date}</p>
-                      </div>
+                      <Button variant="ghost" size="sm" className="text-indigo-600 hover:text-indigo-700">
+                        <Download className="w-4 h-4" />
+                      </Button>
                     </div>
-                    <Button variant="ghost" size="sm" className="text-indigo-600 hover:text-indigo-700">
-                      <Download className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>

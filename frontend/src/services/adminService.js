@@ -90,8 +90,20 @@ export const adminService = {
   addEmployee: (data) => adminService.createEmployee(data),
 
   updateEmployee: (_id, _data) => request(async () => {
-    throw new Error('Employee profile updates are not supported by the backend');
-  }, 'Employee profile updates are not supported by the backend'),
+    // The backend admin module does not support general employee profile updates.
+    // Salary updates are routed through the payroll endpoint.
+    if (_data.salary !== undefined || _data.basicSalary !== undefined) {
+      const basicSalary = Number(_data.basicSalary || _data.salary || 0);
+      const response = await api.put(`/payroll/${_id}`, {
+        basicSalary,
+        bonus: Number(_data.bonus || 0),
+        deductions: Number(_data.deductions || 0),
+      });
+      return normalizePayroll(response.data.payroll);
+    }
+    // No-op for non-salary fields — profile picture changes not supported via admin route
+    return true;
+  }, 'Failed to update employee record'),
 
   deleteEmployee: (id) => request(async () => {
     await api.delete(`/admin/users/${id}`);

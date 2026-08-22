@@ -20,19 +20,10 @@ export const registerUser = asyncHandler(async (req, res) => {
     profilePicture,
   } = req.body;
 
-  // Validate required fields
-  if (
-    !employeeId ||
-    !name ||
-    !email ||
-    !password ||
-    !department ||
-    !designation ||
-    !phone ||
-    !address
-  ) {
+  // Validate core required fields
+  if (!employeeId || !name || !email || !password) {
     res.status(400);
-    throw new Error('Please provide all required fields');
+    throw new Error('Please provide employeeId, name, email, and password');
   }
 
   // Validate email format
@@ -48,11 +39,20 @@ export const registerUser = asyncHandler(async (req, res) => {
     throw new Error('Password must be at least 6 characters long');
   }
 
-  // Validate phone number format
-  const phoneRegex = /^\+?[0-9]{7,15}$/;
-  if (!phoneRegex.test(phone)) {
-    res.status(400);
-    throw new Error('Please provide a valid phone number (7 to 15 digits)');
+  // Set role & fallbacks for optional fields
+  const userRole = role === 'admin' || role === 'Admin' ? 'Admin' : 'Employee';
+  const userDepartment = department || (userRole === 'Admin' ? 'Human Resources' : 'General');
+  const userDesignation = designation || (userRole === 'Admin' ? 'HR Administrator' : 'Employee');
+  const userPhone = phone || '0000000000';
+  const userAddress = address || 'Not provided';
+
+  // Validate phone number format if custom phone supplied
+  if (phone) {
+    const phoneRegex = /^\+?[0-9]{7,15}$/;
+    if (!phoneRegex.test(phone)) {
+      res.status(400);
+      throw new Error('Please provide a valid phone number (7 to 15 digits)');
+    }
   }
 
   // Check if email already exists
@@ -73,17 +73,17 @@ export const registerUser = asyncHandler(async (req, res) => {
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
 
-  // Create User
+  // Create User in MongoDB
   const user = await User.create({
     employeeId,
     name,
     email: email.toLowerCase(),
     password: hashedPassword,
-    role: role || 'Employee',
-    department,
-    designation,
-    phone,
-    address,
+    role: userRole,
+    department: userDepartment,
+    designation: userDesignation,
+    phone: userPhone,
+    address: userAddress,
     profilePicture: profilePicture || '',
   });
 

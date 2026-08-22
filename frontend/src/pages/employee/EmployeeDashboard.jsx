@@ -220,8 +220,8 @@ export const EmployeeDashboard = () => {
             <CardContent className="p-5 flex items-center justify-between">
               <div className="space-y-1">
                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Net Salary</p>
-                <h3 className="text-2xl font-extrabold text-slate-900">${payroll?.netSalary.toLocaleString()}</h3>
-                <p className="text-[11px] text-slate-500">Last paid: {payroll?.lastPaymentDate}</p>
+                <h3 className="text-2xl font-extrabold text-slate-900">${(payroll?.netSalary || 0).toLocaleString()}</h3>
+                <p className="text-[11px] text-slate-500">{payroll ? 'Current month' : 'No payroll record'}</p>
               </div>
               <div className="w-12 h-12 rounded-xl bg-sky-50 flex items-center justify-center text-sky-600 shrink-0">
                 <CreditCard className="w-6 h-6" />
@@ -330,11 +330,11 @@ export const EmployeeDashboard = () => {
               <CardContent className="space-y-3 pt-0">
                 <div className="flex items-center justify-between text-xs p-2.5 bg-slate-50 rounded-lg">
                   <span className="text-slate-600">Current Salary</span>
-                  <span className="font-bold text-slate-900">${payroll?.netSalary.toLocaleString()}</span>
+                  <span className="font-bold text-slate-900">${(payroll?.netSalary || 0).toLocaleString()}</span>
                 </div>
                 <div className="flex items-center justify-between text-xs p-2.5 bg-slate-50 rounded-lg">
-                  <span className="text-slate-600">Last Payment Date</span>
-                  <span className="font-bold text-slate-800">{payroll?.lastPaymentDate}</span>
+                  <span className="text-slate-600">{payroll ? 'Last Updated' : 'Status'}</span>
+                  <span className="font-bold text-slate-800">{payroll ? 'Current month' : 'Not assigned'}</span>
                 </div>
               </CardContent>
             </Card>

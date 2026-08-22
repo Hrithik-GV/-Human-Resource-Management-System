@@ -1,12 +1,28 @@
 import api, { handleApiError } from './api';
 
-const normalizeLeave = (leave) => ({ ...leave, id: leave._id, startDate: leave.fromDate?.slice(0, 10), endDate: leave.toDate?.slice(0, 10), appliedOn: leave.createdAt?.slice(0, 10), days: Math.ceil((new Date(leave.toDate) - new Date(leave.fromDate)) / 86400000) + 1 });
+const normalizeLeave = (leave) => ({
+  ...leave,
+  id: leave._id,
+  startDate: leave.fromDate?.slice(0, 10),
+  endDate: leave.toDate?.slice(0, 10),
+  appliedOn: leave.createdAt?.slice(0, 10),
+  days:
+    leave.fromDate && leave.toDate
+      ? Math.ceil((new Date(leave.toDate) - new Date(leave.fromDate)) / 86400000) + 1
+      : 1,
+});
 
 export const leaveService = {
   getBalances: async () => {
     try {
       const leaves = await leaveService.getMyLeaves();
-      return { paidLeave: 0, sickLeave: 0, unpaidLeave: 0, pendingRequests: leaves.filter((leave) => leave.status === 'Pending').length, approvedRequests: leaves.filter((leave) => leave.status === 'Approved').length };
+      return {
+        paidLeave: 0,
+        sickLeave: 0,
+        unpaidLeave: 0,
+        pendingRequests: leaves.filter((leave) => leave.status === 'Pending').length,
+        approvedRequests: leaves.filter((leave) => leave.status === 'Approved').length,
+      };
     } catch (error) {
       throw new Error(handleApiError(error, 'Failed to fetch leave balances'));
     }
@@ -36,7 +52,14 @@ export const leaveService = {
 
   applyLeave: async (leaveData) => {
     try {
-      const response = await api.post('/leave/apply', { ...leaveData, leaveType: leaveData.leaveType.replace(' Leave', '') });
+      // Strip " Leave" suffix to match backend enum: 'Paid', 'Sick', 'Unpaid', 'Casual'
+      const leaveType = leaveData.leaveType?.replace(' Leave', '') || leaveData.leaveType;
+      const response = await api.post('/leave/apply', {
+        leaveType,
+        fromDate: leaveData.startDate || leaveData.fromDate,
+        toDate: leaveData.endDate || leaveData.toDate,
+        reason: leaveData.reason,
+      });
       return normalizeLeave(response.data.leave);
     } catch (error) {
       throw new Error(handleApiError(error, 'Leave application failed'));
