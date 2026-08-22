@@ -1,34 +1,162 @@
+import bcrypt from 'bcryptjs';
 import asyncHandler from '../utils/asyncHandler.js';
+import User from '../models/User.js';
+import generateToken from '../utils/generateToken.js';
 
 // @desc    Register a new user / employee
 // @route   POST /api/auth/register
-// @access  Public / Admin
+// @access  Public
 export const registerUser = asyncHandler(async (req, res) => {
-  // TODO: Implement user registration logic (validate input, check existing user, hash password, save user)
-  res.status(501).json({
-    success: true,
-    message: 'Register endpoint skeleton - TODO: Implement business logic',
+  const {
+    employeeId,
+    name,
+    email,
+    password,
+    role,
+    department,
+    designation,
+    phone,
+    address,
+    profilePicture,
+  } = req.body;
+
+  // Validate required fields
+  if (
+    !employeeId ||
+    !name ||
+    !email ||
+    !password ||
+    !department ||
+    !designation ||
+    !phone ||
+    !address
+  ) {
+    res.status(400);
+    throw new Error('Please provide all required fields');
+  }
+
+  // Validate email format
+  const emailRegex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,})+$/;
+  if (!emailRegex.test(email)) {
+    res.status(400);
+    throw new Error('Please provide a valid email address');
+  }
+
+  // Check if email already exists
+  const existingEmail = await User.findOne({ email: email.toLowerCase() });
+  if (existingEmail) {
+    res.status(409);
+    throw new Error('User with this email already exists');
+  }
+
+  // Check if employeeId already exists
+  const existingEmployeeId = await User.findOne({ employeeId });
+  if (existingEmployeeId) {
+    res.status(409);
+    throw new Error('User with this employeeId already exists');
+  }
+
+  // Hash password
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(password, salt);
+
+  // Create User
+  const user = await User.create({
+    employeeId,
+    name,
+    email: email.toLowerCase(),
+    password: hashedPassword,
+    role: role || 'Employee',
+    department,
+    designation,
+    phone,
+    address,
+    profilePicture: profilePicture || '',
   });
+
+  if (user) {
+    const token = generateToken(user._id, user.role);
+
+    res.status(201).json({
+      success: true,
+      message: 'User registered successfully',
+      token,
+      user: {
+        _id: user._id,
+        employeeId: user.employeeId,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        department: user.department,
+        designation: user.designation,
+        phone: user.phone,
+        address: user.address,
+        profilePicture: user.profilePicture,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      },
+    });
+  } else {
+    res.status(400);
+    throw new Error('Invalid user data provided');
+  }
 });
 
 // @desc    Authenticate user & get token
 // @route   POST /api/auth/login
 // @access  Public
 export const loginUser = asyncHandler(async (req, res) => {
-  // TODO: Implement user login logic (validate credentials, compare password, return JWT token)
-  res.status(501).json({
-    success: true,
-    message: 'Login endpoint skeleton - TODO: Implement business logic',
-  });
+  const { email, password } = req.body;
+
+  // Validate input
+  if (!email || !password) {
+    res.status(400);
+    throw new Error('Please provide email and password');
+  }
+
+  // Find user by email
+  const user = await User.findOne({ email: email.toLowerCase() });
+
+  // Compare password using bcrypt
+  if (user && (await bcrypt.compare(password, user.password))) {
+    const token = generateToken(user._id, user.role);
+
+    res.status(200).json({
+      success: true,
+      message: 'Login successful',
+      token,
+      user: {
+        _id: user._id,
+        employeeId: user.employeeId,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        department: user.department,
+        designation: user.designation,
+        phone: user.phone,
+        address: user.address,
+        profilePicture: user.profilePicture,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      },
+    });
+  } else {
+    res.status(401);
+    throw new Error('Invalid email or password');
+  }
 });
 
 // @desc    Get current user profile
 // @route   GET /api/auth/me
 // @access  Private
 export const getMe = asyncHandler(async (req, res) => {
-  // TODO: Implement get authenticated user profile logic
-  res.status(501).json({
+  if (!req.user) {
+    res.status(401);
+    throw new Error('User not authenticated');
+  }
+
+  res.status(200).json({
     success: true,
-    message: 'Get current user profile endpoint skeleton - TODO: Implement business logic',
+    user: req.user,
   });
 });

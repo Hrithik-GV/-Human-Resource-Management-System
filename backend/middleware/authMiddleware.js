@@ -10,7 +10,7 @@ export const protect = asyncHandler(async (req, res, next) => {
 
   if (
     req.headers.authorization &&
-    req.headers.authorization.startsWith('Bearer')
+    req.headers.authorization.startsWith('Bearer ')
   ) {
     try {
       token = req.headers.authorization.split(' ')[1];
@@ -18,8 +18,11 @@ export const protect = asyncHandler(async (req, res, next) => {
       
       // Attach user object to request (excluding password)
       req.user = await User.findById(decoded.id).select('-password');
-      
-      // TODO: Handle case where user is deleted or disabled
+
+      if (!req.user) {
+        res.status(401);
+        throw new Error('Not authorized, user not found');
+      }
       
       next();
     } catch (error) {
