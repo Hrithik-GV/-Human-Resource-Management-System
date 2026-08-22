@@ -25,8 +25,10 @@ import { Input } from '../../components/ui/Input';
 import { Modal } from '../../components/ui/Modal';
 import { SkeletonLoader } from '../../components/ui/SkeletonLoader';
 import { employeeService } from '../../services/employeeService';
+import { useAuth } from '../../context/AuthContext';
 
 export const EmployeeProfile = () => {
+  const { refreshUser } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -48,9 +50,9 @@ export const EmployeeProfile = () => {
       const data = await employeeService.getProfile();
       setProfile(data);
       reset({
-        phone: data.phone,
-        address: data.address,
-        avatar: data.avatar,
+        phone: data.phone || '',
+        address: data.address || '',
+        avatar: data.avatar || '',
       });
     } catch (err) {
       toast.error('Failed to load profile details.');
@@ -63,6 +65,7 @@ export const EmployeeProfile = () => {
     try {
       const updated = await employeeService.updateProfile(formData);
       setProfile(updated);
+      await refreshUser();
       toast.success('Profile contact details updated successfully!');
       setIsEditModalOpen(false);
     } catch (err) {

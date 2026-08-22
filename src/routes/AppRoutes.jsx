@@ -61,6 +61,7 @@ export const AppRoutes = () => {
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="profile" element={<EmployeeProfile />} />
             <Route path="employees" element={<AdminEmployees />} />
             <Route path="attendance" element={<AdminAttendance />} />
             <Route path="leaves" element={<AdminLeaves />} />

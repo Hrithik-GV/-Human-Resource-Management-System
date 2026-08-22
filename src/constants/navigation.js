@@ -38,6 +38,7 @@ export const PAGE_TITLES = {
   '/employee/leave': 'Leave Management',
   '/employee/payroll': 'Payroll & Payslips',
   '/admin/dashboard': 'Admin Dashboard',
+  '/admin/profile': 'Admin Profile',
   '/admin/employees': 'Employee Directory',
   '/admin/attendance': 'Attendance Overview',
   '/admin/leaves': 'Leave Requests Management',

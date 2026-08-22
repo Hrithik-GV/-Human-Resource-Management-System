@@ -25,7 +25,7 @@ export const Header = ({ onToggleMobileSidebar = () => {} }) => {
     {
       label: 'Profile',
       icon: User,
-      onClick: () => navigate(role === 'admin' ? '/admin/dashboard' : '/employee/profile'),
+      onClick: () => navigate(role === 'admin' ? '/admin/profile' : '/employee/profile'),
     },
     {
       label: 'Settings',
