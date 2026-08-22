@@ -8,6 +8,9 @@ const authRoutes = require("./routes/authRoutes");
 
 const app = express();
 
+const attendanceRoutes = require("./routes/attendanceRoutes");
+
+const leaveRoutes = require("./routes/leaveRoutes");
 connectDB();
 
 app.use(cors());
@@ -20,6 +23,8 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/attendance", attendanceRoutes);
+app.use("/api/leaves", leaveRoutes);
 
 const PORT = process.env.PORT || 5000;
 
