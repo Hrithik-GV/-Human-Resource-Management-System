@@ -10,7 +10,9 @@ import {
   Settings,
   LogOut,
   Sparkles,
-  ClipboardList
+  ClipboardList,
+  Landmark,
+  FileBarChart2
 } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 
@@ -35,6 +37,8 @@ export const Sidebar = ({ isOpen, toggleSidebar }) => {
     { name: "Attendance", path: "/admin/attendance", icon: CalendarCheck },
     { name: "Leave Requests", path: "/admin/leaves", icon: ClipboardList },
     { name: "Payroll", path: "/admin/payroll", icon: CreditCard },
+    { name: "Departments", path: "/admin/departments", icon: Landmark },
+    { name: "Reports", path: "/admin/reports", icon: FileBarChart2 },
   ];
 
   const links = isAdmin ? adminLinks : employeeLinks;

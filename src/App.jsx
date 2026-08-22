@@ -19,6 +19,8 @@ import { Employees as AdminEmployees } from "./pages/admin/Employees";
 import { Attendance as AdminAttendance } from "./pages/admin/Attendance";
 import { LeaveRequests as AdminLeaves } from "./pages/admin/LeaveRequests";
 import { Payroll as AdminPayroll } from "./pages/admin/Payroll";
+import { Departments as AdminDepartments } from "./pages/admin/Departments";
+import { Reports as AdminReports } from "./pages/admin/Reports";
 
 // Shared Pages
 import { Settings } from "./pages/shared/Settings";
@@ -195,6 +197,26 @@ const MainRoutes = () => {
           <RouteGuard allowedRole="admin">
             <DashboardLayout title="Payroll Management">
               <AdminPayroll />
+            </DashboardLayout>
+          </RouteGuard>
+        }
+      />
+      <Route
+        path="/admin/departments"
+        element={
+          <RouteGuard allowedRole="admin">
+            <DashboardLayout title="Departments">
+              <AdminDepartments />
+            </DashboardLayout>
+          </RouteGuard>
+        }
+      />
+      <Route
+        path="/admin/reports"
+        element={
+          <RouteGuard allowedRole="admin">
+            <DashboardLayout title="Reports">
+              <AdminReports />
             </DashboardLayout>
           </RouteGuard>
         }
