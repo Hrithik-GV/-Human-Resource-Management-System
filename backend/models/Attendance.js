@@ -1,15 +1,18 @@
 import mongoose from 'mongoose';
 
+/**
+ * Attendance Schema representing employee daily check-in and check-out tracking
+ */
 const attendanceSchema = new mongoose.Schema(
   {
     employee: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
+      required: [true, 'Employee reference is required'],
     },
     date: {
       type: Date,
-      required: true,
+      required: [true, 'Attendance date is required'],
     },
     checkIn: {
       type: Date,
@@ -19,7 +22,10 @@ const attendanceSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['Present', 'Absent', 'Half-day', 'On-Leave', 'Late'],
+      enum: {
+        values: ['Present', 'Absent', 'Half Day', 'Leave'],
+        message: '{VALUE} is not a valid attendance status',
+      },
       default: 'Present',
     },
   },
@@ -28,6 +34,7 @@ const attendanceSchema = new mongoose.Schema(
   }
 );
 
-const Attendance = mongoose.model('Attendance', attendanceSchema);
+const Attendance =
+  mongoose.models.Attendance || mongoose.model('Attendance', attendanceSchema);
 
 export default Attendance;

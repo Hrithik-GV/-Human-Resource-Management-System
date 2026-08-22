@@ -1,24 +1,30 @@
 import mongoose from 'mongoose';
 
+/**
+ * Leave Schema representing employee leave applications and request statuses
+ */
 const leaveSchema = new mongoose.Schema(
   {
     employee: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
+      required: [true, 'Employee reference is required'],
     },
     leaveType: {
       type: String,
-      enum: ['Sick', 'Casual', 'Earned', 'Unpaid'],
-      required: true,
+      enum: {
+        values: ['Paid', 'Sick', 'Unpaid'],
+        message: '{VALUE} is not a valid leave type',
+      },
+      required: [true, 'Leave type is required'],
     },
     fromDate: {
       type: Date,
-      required: true,
+      required: [true, 'From Date is required'],
     },
     toDate: {
       type: Date,
-      required: true,
+      required: [true, 'To Date is required'],
     },
     reason: {
       type: String,
@@ -26,13 +32,16 @@ const leaveSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['Pending', 'Approved', 'Rejected'],
+      enum: {
+        values: ['Pending', 'Approved', 'Rejected'],
+        message: '{VALUE} is not a valid leave status',
+      },
       default: 'Pending',
     },
     adminComment: {
       type: String,
-      trim: true,
       default: '',
+      trim: true,
     },
   },
   {
@@ -40,6 +49,6 @@ const leaveSchema = new mongoose.Schema(
   }
 );
 
-const Leave = mongoose.model('Leave', leaveSchema);
+const Leave = mongoose.models.Leave || mongoose.model('Leave', leaveSchema);
 
 export default Leave;
