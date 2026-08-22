@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { EMPLOYEE_NAV_ITEMS, ADMIN_NAV_ITEMS, BOTTOM_NAV_ITEMS } from '../../constants/navigation';
+import { useAuth } from '../../context/AuthContext';
 
 export const Sidebar = ({
   role = 'employee',
@@ -16,13 +17,13 @@ export const Sidebar = ({
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const mainNavItems = role === 'admin' ? ADMIN_NAV_ITEMS : EMPLOYEE_NAV_ITEMS;
 
-  const handleBottomAction = (item) => {
+  const handleBottomAction = async (item) => {
     if (item.action === 'logout') {
-      localStorage.removeItem('dayflow_token');
-      localStorage.removeItem('dayflow_role');
+      await logout();
       navigate('/login');
     } else if (item.path) {
       navigate(item.path);
@@ -43,7 +44,6 @@ export const Sidebar = ({
         className={cn(
           'fixed top-0 left-0 z-40 h-screen bg-slate-900 text-white flex flex-col justify-between border-r border-slate-800 transition-all duration-300 ease-in-out shadow-lg',
           isCollapsed ? 'w-20' : 'w-64',
-          // Mobile placement
           isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         )}
       >

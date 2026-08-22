@@ -1,25 +1,29 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Bell, Menu, User, Settings, LogOut, Search } from 'lucide-react';
+import { Menu, User, Settings, LogOut, Search } from 'lucide-react';
 import { Avatar } from '../ui/Avatar';
 import { Badge } from '../ui/Badge';
 import { Dropdown } from '../ui/Dropdown';
+import { NotificationDropdown } from './NotificationDropdown';
 import { PAGE_TITLES } from '../../constants/navigation';
+import { useAuth } from '../../context/AuthContext';
 
-export const Header = ({
-  role = 'employee',
-  user = { name: 'Alex Morgan', role: role === 'admin' ? 'Administrator' : 'HR Specialist' },
-  onToggleMobileSidebar = () => {},
-}) => {
+export const Header = ({ onToggleMobileSidebar = () => {} }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { currentUser, role, logout } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
 
   const currentTitle = PAGE_TITLES[location.pathname] || 'Dashboard';
 
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
+
   const dropdownItems = [
     {
-      label: 'My Profile',
+      label: 'Profile',
       icon: User,
       onClick: () => navigate(role === 'admin' ? '/admin/dashboard' : '/employee/profile'),
     },
@@ -33,10 +37,7 @@ export const Header = ({
       label: 'Logout',
       icon: LogOut,
       danger: true,
-      onClick: () => {
-        localStorage.removeItem('dayflow_token');
-        navigate('/login');
-      },
+      onClick: handleLogout,
     },
   ];
 
@@ -60,7 +61,7 @@ export const Header = ({
       </div>
 
       {/* Center/Right: Search Box & Actions */}
-      <div className="flex items-center gap-3 sm:gap-5">
+      <div className="flex items-center gap-3 sm:gap-4">
         {/* Search Box */}
         <div className="relative hidden md:flex items-center w-48 lg:w-64">
           <Search className="absolute left-3 w-4 h-4 text-slate-400 pointer-events-none" />
@@ -68,38 +69,41 @@ export const Header = ({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search employees, leaves..."
+            placeholder="Search portal..."
             className="w-full bg-slate-50 border border-slate-200 text-slate-900 text-xs rounded-lg pl-9 pr-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all placeholder:text-slate-400"
           />
         </div>
 
-        {/* Notification Icon */}
-        <button
-          className="relative p-2 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-          aria-label="View notifications"
-        >
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-indigo-600 ring-2 ring-white" />
-        </button>
+        {/* Notification Bell Dropdown */}
+        <NotificationDropdown />
 
         <div className="h-6 w-px bg-slate-200" />
 
-        {/* User Profile Dropdown */}
+        {/* Profile Dropdown */}
         <Dropdown
           align="right"
           trigger={
-            <button className="flex items-center gap-3 p-1 rounded-lg hover:bg-slate-50 transition-colors focus:outline-none">
-              <Avatar name={user.name} size="sm" status="online" />
+            <button className="flex items-center gap-2.5 p-1 rounded-lg hover:bg-slate-50 transition-colors focus:outline-none">
+              <Avatar
+                src={currentUser?.avatar}
+                name={currentUser?.fullName || 'User'}
+                size="sm"
+                status="online"
+              />
               <div className="hidden sm:flex flex-col text-left">
                 <span className="text-xs font-semibold text-slate-800 leading-tight">
-                  {user.name}
+                  {currentUser?.fullName || 'User'}
                 </span>
                 <span className="text-[10px] text-slate-500 font-medium">
-                  {user.role}
+                  {currentUser?.title || (role === 'admin' ? 'Administrator' : 'Employee')}
                 </span>
               </div>
-              <Badge variant={role === 'admin' ? 'primary' : 'info'} size="sm" className="hidden lg:inline-flex capitalize ml-1">
-                {role}
+              <Badge
+                variant={role === 'admin' ? 'primary' : 'info'}
+                size="sm"
+                className="hidden lg:inline-flex capitalize ml-1"
+              >
+                {role || 'user'}
               </Badge>
             </button>
           }

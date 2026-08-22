@@ -1,18 +1,44 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, Link } from 'react-router-dom';
-import { Mail, Lock, User, Building, ArrowRight } from 'lucide-react';
+import { Mail, Lock, User, IdCard, ArrowRight } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Button } from '../../components/ui/Button';
+import { useAuth } from '../../context/AuthContext';
 
 export const Register = () => {
   const navigate = useNavigate();
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm();
+  const { register: registerAuth } = useAuth();
 
-  const onSubmit = (data) => {
-    localStorage.setItem('dayflow_token', 'phase1_demo_token');
-    navigate(data.role === 'admin' ? '/admin/dashboard' : '/employee/dashboard');
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors, isValid, isSubmitting },
+  } = useForm({
+    mode: 'onChange',
+    defaultValues: {
+      employeeId: '',
+      fullName: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      role: 'employee',
+    },
+  });
+
+  const password = watch('password');
+
+  const onSubmit = async (data) => {
+    try {
+      const user = await registerAuth(data);
+      toast.success('Registration successful! Welcome to Dayflow.');
+      navigate(user.role === 'admin' ? '/admin/dashboard' : '/employee/dashboard');
+    } catch (err) {
+      toast.error(err.message || 'Registration failed. Please try again.');
+    }
   };
 
   return (
@@ -22,37 +48,58 @@ export const Register = () => {
           Create an Account
         </h2>
         <p className="text-xs text-slate-500">
-          Get started with Dayflow HR management system
+          Enter your details below to register your account
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+        <Input
+          label="Employee ID"
+          type="text"
+          leftIcon={<IdCard className="w-4 h-4" />}
+          placeholder="EMP-1001"
+          error={errors.employeeId?.message}
+          {...register('employeeId', {
+            required: 'Employee ID is required',
+          })}
+        />
+
         <Input
           label="Full Name"
           type="text"
           leftIcon={<User className="w-4 h-4" />}
-          placeholder="John Doe"
+          placeholder="Jane Doe"
           error={errors.fullName?.message}
-          {...register('fullName', { required: 'Full name is required' })}
+          {...register('fullName', {
+            required: 'Full name is required',
+          })}
         />
 
         <Input
-          label="Work Email"
+          label="Email Address"
           type="email"
           leftIcon={<Mail className="w-4 h-4" />}
           placeholder="name@company.com"
           error={errors.email?.message}
-          {...register('email', { required: 'Email is required' })}
+          {...register('email', {
+            required: 'Email address is required',
+            pattern: {
+              value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+              message: 'Please enter a valid email address',
+            },
+          })}
         />
 
         <Select
-          label="Account Role"
+          label="Role"
           options={[
             { label: 'Employee', value: 'employee' },
-            { label: 'HR Administrator', value: 'admin' },
+            { label: 'Admin', value: 'admin' },
           ]}
           error={errors.role?.message}
-          {...register('role', { required: 'Select a role' })}
+          {...register('role', {
+            required: 'Please select a role',
+          })}
         />
 
         <Input
@@ -61,7 +108,26 @@ export const Register = () => {
           leftIcon={<Lock className="w-4 h-4" />}
           placeholder="••••••••"
           error={errors.password?.message}
-          {...register('password', { required: 'Password is required', minLength: { value: 6, message: 'Minimum 6 characters' } })}
+          {...register('password', {
+            required: 'Password is required',
+            minLength: {
+              value: 6,
+              message: 'Password must be at least 6 characters',
+            },
+          })}
+        />
+
+        <Input
+          label="Confirm Password"
+          type="password"
+          leftIcon={<Lock className="w-4 h-4" />}
+          placeholder="••••••••"
+          error={errors.confirmPassword?.message}
+          {...register('confirmPassword', {
+            required: 'Please confirm your password',
+            validate: (value) =>
+              value === password || 'Passwords do not match',
+          })}
         />
 
         <Button
@@ -70,16 +136,17 @@ export const Register = () => {
           size="lg"
           className="w-full mt-2"
           isLoading={isSubmitting}
+          isDisabled={!isValid || isSubmitting}
           rightIcon={<ArrowRight className="w-4 h-4" />}
         >
-          Create Account
+          Register
         </Button>
       </form>
 
       <div className="border-t border-slate-100 pt-5 text-center text-xs text-slate-500">
         Already have an account?{' '}
         <Link to="/login" className="text-indigo-600 font-semibold hover:underline">
-          Sign In
+          Login
         </Link>
       </div>
     </div>
