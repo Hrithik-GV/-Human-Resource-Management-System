@@ -26,7 +26,8 @@ export const Sidebar = ({
       await logout();
       navigate('/login');
     } else if (item.path) {
-      navigate(item.path);
+      const targetPath = item.path === '/settings' ? (role === 'admin' ? '/admin/settings' : '/employee/settings') : item.path;
+      navigate(targetPath);
     }
   };
 
@@ -115,11 +116,13 @@ export const Sidebar = ({
         <div className="p-3 border-t border-slate-800/80 space-y-1.5">
           {BOTTOM_NAV_ITEMS.map((item) => {
             const Icon = item.icon;
+            const targetPath = item.path === '/settings' ? (role === 'admin' ? '/admin/settings' : '/employee/settings') : item.path;
+
             if (item.path) {
               return (
                 <NavLink
                   key={item.path}
-                  to={item.path}
+                  to={targetPath}
                   onClick={onCloseMobile}
                   className={({ isActive }) =>
                     cn(

@@ -53,6 +53,7 @@ export const AppRoutes = () => {
             <Route path="attendance" element={<EmployeeAttendance />} />
             <Route path="leave" element={<EmployeeLeave />} />
             <Route path="payroll" element={<EmployeePayroll />} />
+            <Route path="settings" element={<SettingsPage />} />
           </Route>
         </Route>
 
@@ -66,10 +67,11 @@ export const AppRoutes = () => {
             <Route path="attendance" element={<AdminAttendance />} />
             <Route path="leaves" element={<AdminLeaves />} />
             <Route path="payroll" element={<AdminPayroll />} />
+            <Route path="settings" element={<SettingsPage />} />
           </Route>
         </Route>
 
-        {/* Settings Route */}
+        {/* Legacy /settings redirect */}
         <Route element={<ProtectedRoute />}>
           <Route path="/settings" element={<EmployeeLayout />}>
             <Route index element={<SettingsPage />} />
