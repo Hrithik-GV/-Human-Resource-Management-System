@@ -20,9 +20,11 @@ import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { Tabs } from '../components/ui/Tabs';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 export const SettingsPage = () => {
   const { currentUser, role, refreshUser } = useAuth();
+  const { theme: currentTheme, setTheme } = useTheme();
   const [activeTab, setActiveTab] = useState('account');
 
   // Account Settings Form
@@ -69,7 +71,6 @@ export const SettingsPage = () => {
 
   // System Preferences State
   const [preferences, setPreferences] = useState({
-    theme: localStorage.getItem('dayflow_theme') || 'light',
     density: 'comfortable',
     defaultLanding: role === 'admin' ? '/admin/dashboard' : '/employee/dashboard',
   });
@@ -123,14 +124,13 @@ export const SettingsPage = () => {
     }
   };
 
+  const handleThemeSelect = (mode) => {
+    setTheme(mode);
+    toast.success(`Theme switched to ${mode.toUpperCase()} mode!`);
+  };
+
   const handlePreferenceChange = (key, value) => {
-    setPreferences((prev) => {
-      const updated = { ...prev, [key]: value };
-      if (key === 'theme') {
-        localStorage.setItem('dayflow_theme', value);
-      }
-      return updated;
-    });
+    setPreferences((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleSavePreferences = () => {
@@ -405,10 +405,10 @@ export const SettingsPage = () => {
                 <div className="grid grid-cols-3 gap-3">
                   <button
                     type="button"
-                    onClick={() => handlePreferenceChange('theme', 'light')}
+                    onClick={() => handleThemeSelect('light')}
                     className={`p-3 rounded-xl border flex flex-col items-center gap-2 text-xs font-semibold transition-all cursor-pointer ${
-                      preferences.theme === 'light'
-                        ? 'border-indigo-600 bg-indigo-50 text-indigo-700 shadow-xs'
+                      currentTheme === 'light'
+                        ? 'border-indigo-600 bg-indigo-50 text-indigo-700 shadow-xs ring-2 ring-indigo-500/20'
                         : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
                     }`}
                   >
@@ -418,23 +418,23 @@ export const SettingsPage = () => {
 
                   <button
                     type="button"
-                    onClick={() => handlePreferenceChange('theme', 'dark')}
+                    onClick={() => handleThemeSelect('dark')}
                     className={`p-3 rounded-xl border flex flex-col items-center gap-2 text-xs font-semibold transition-all cursor-pointer ${
-                      preferences.theme === 'dark'
-                        ? 'border-indigo-600 bg-indigo-50 text-indigo-700 shadow-xs'
+                      currentTheme === 'dark'
+                        ? 'border-indigo-600 bg-indigo-50 text-indigo-700 shadow-xs ring-2 ring-indigo-500/20'
                         : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
                     }`}
                   >
                     <Moon className="w-5 h-5 text-indigo-600" />
-                    <span>Dark Mode (Beta)</span>
+                    <span>Dark Mode</span>
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => handlePreferenceChange('theme', 'system')}
+                    onClick={() => handleThemeSelect('system')}
                     className={`p-3 rounded-xl border flex flex-col items-center gap-2 text-xs font-semibold transition-all cursor-pointer ${
-                      preferences.theme === 'system'
-                        ? 'border-indigo-600 bg-indigo-50 text-indigo-700 shadow-xs'
+                      currentTheme === 'system'
+                        ? 'border-indigo-600 bg-indigo-50 text-indigo-700 shadow-xs ring-2 ring-indigo-500/20'
                         : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
                     }`}
                   >

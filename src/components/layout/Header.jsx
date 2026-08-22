@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Menu, User, Settings, LogOut, Search } from 'lucide-react';
+import { Menu, User, Settings, LogOut, Search, Sun, Moon } from 'lucide-react';
 import { Avatar } from '../ui/Avatar';
 import { Badge } from '../ui/Badge';
 import { Dropdown } from '../ui/Dropdown';
 import { NotificationDropdown } from './NotificationDropdown';
 import { PAGE_TITLES } from '../../constants/navigation';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 
 export const Header = ({ onToggleMobileSidebar = () => {} }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { currentUser, role, logout } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
 
   const currentTitle = PAGE_TITLES[location.pathname] || 'Dashboard';
@@ -30,7 +32,7 @@ export const Header = ({ onToggleMobileSidebar = () => {} }) => {
     {
       label: 'Settings',
       icon: Settings,
-      onClick: () => navigate('/settings'),
+      onClick: () => navigate(role === 'admin' ? '/admin/settings' : '/employee/settings'),
     },
     { divider: true },
     {
@@ -73,6 +75,20 @@ export const Header = ({ onToggleMobileSidebar = () => {} }) => {
             className="w-full bg-slate-50 border border-slate-200 text-slate-900 text-xs rounded-lg pl-9 pr-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all placeholder:text-slate-400"
           />
         </div>
+
+        {/* Theme Mode Toggle Button */}
+        <button
+          onClick={toggleTheme}
+          className="p-2 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800 transition-colors"
+          title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          aria-label="Toggle dark/light theme"
+        >
+          {isDark ? (
+            <Sun className="w-5 h-5 text-amber-400" />
+          ) : (
+            <Moon className="w-5 h-5 text-slate-600" />
+          )}
+        </button>
 
         {/* Notification Bell Dropdown */}
         <NotificationDropdown />
