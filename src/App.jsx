@@ -102,7 +102,7 @@ const MainRoutes = () => {
       <Route
         path="/employee/profile"
         element={
-          <RouteGuard allowedRole="employee">
+          <RouteGuard>
             <DashboardLayout title="My Profile">
               <EmployeeProfile />
             </DashboardLayout>
