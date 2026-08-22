@@ -1,143 +1,201 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { useApp } from "../../context/AppContext";
+import { useAuth } from "../../hooks/useAuth";
+import { PATHS } from "../../constants/paths";
+import { formatCurrency } from "../../utils/format";
 import { StatCard } from "../../components/Dashboard/StatCard";
 import { AttendanceChart } from "../../components/Dashboard/AttendanceChart";
-import { LeaveChart } from "../../components/Dashboard/LeaveChart";
 import { RecentActivity } from "../../components/Dashboard/RecentActivity";
 import { Card, CardHeader, CardTitle, CardContent } from "../../components/UI/Card";
 import { Button } from "../../components/UI/Button";
 import { Badge } from "../../components/UI/Badge";
-import { Users, UserCheck, CalendarClock, CreditCard, UserPlus, Clock, Shield, ArrowRight } from "lucide-react";
+import { Users, UserCheck, CalendarDays, ClipboardList, ArrowRight, UserPlus, Clock } from "lucide-react";
 
 export const Dashboard = () => {
+  const { currentUser } = useAuth();
   const { employees, attendance, leaves, payroll } = useApp();
 
-  // Metrics calculation
+  if (!currentUser) return null;
+
+  // Stats calculation
   const totalEmployees = employees.length;
+  const activeEmployees = employees.filter((emp) => emp.status === "Active").length;
+  const totalLeavesApplied = leaves.length;
+  const pendingLeaves = leaves.filter((lv) => lv.status === "Pending").length;
+  const totalPayrollExpenses = payroll.reduce((acc, curr) => acc + (curr.netSalary || 0), 0);
 
   const todayStr = new Date().toISOString().split("T")[0];
-  const presentToday = attendance.filter((att) => att.date === todayStr && (att.status === "Present" || att.status === "Half Day")).length;
+  const todayAttendance = attendance.filter((att) => att.date === todayStr);
+  const presentToday = todayAttendance.filter((att) => att.status === "Present" || att.status === "Half Day").length;
+  const attendanceRate = totalEmployees > 0 ? ((presentToday / totalEmployees) * 100).toFixed(0) : 0;
 
-  const pendingLeaves = leaves.filter((lv) => lv.status === "Pending").length;
-
-  const totalMonthlyPayroll = payroll.reduce((acc, curr) => acc + (curr.netSalary || 0), 0);
-
-  // Quick Action triggers
-  const actions = [
-    { title: "Add Employee", path: "/admin/employees", icon: UserPlus, description: "Register new hire" },
-    { title: "View Attendance", path: "/admin/attendance", icon: Clock, description: "Check status logs" },
-    { title: "Review Leaves", path: "/admin/leaves", icon: CalendarClock, description: "Approve or reject" },
-    { title: "Manage Payroll", path: "/admin/payroll", icon: CreditCard, description: "Adjust salary rates" },
+  // Weekly Working Hours Chart Data
+  const chartData = [
+    { name: "Mon", hours: 45 },
+    { name: "Tue", hours: 52 },
+    { name: "Wed", hours: 49 },
+    { name: "Thu", hours: 60 },
+    { name: "Fri", hours: 48 },
   ];
 
-  // Aggregate attendance data for charts: present rate or total count per department
-  const deptMap = {};
-  employees.forEach((emp) => {
-    deptMap[emp.department] = (deptMap[emp.department] || 0) + 1;
-  });
-  const deptChartData = Object.keys(deptMap).map((key) => {
-    const colors = {
-      Engineering: "#3b6be8",
-      "Human Resources": "#638cf0",
-      Design: "#a5b4fc",
-      Marketing: "#cbd5e1",
-      Finance: "#94a3b8",
-      Sales: "#475569",
-    };
-    return {
-      name: key,
-      count: deptMap[key],
-      color: colors[key] || "#cbd5e1",
-    };
-  });
-
-  // Recent system logs
-  const systemActivities = [];
+  // Activities logs mapping
+  const activities = [];
   attendance.slice(0, 3).forEach((att) => {
-    const emp = employees.find((e) => e.id === att.employeeId);
-    if (emp) {
-      systemActivities.push({
-        id: `sys-in-${att.id}`,
-        type: att.checkOut ? "check_out" : "check_in",
-        title: `${emp.name} ${att.checkOut ? "Checked Out" : "Checked In"}`,
-        description: `${att.checkOut ? `Hours: ${att.hours} hrs` : `In: ${att.checkIn}`}`,
-        time: att.date,
-      });
-    }
+    const emp = employees.find((e) => e.id === att.employeeId) || { name: "Unknown Staff" };
+    activities.push({
+      id: `att-${att.id}`,
+      type: "check_in",
+      title: `${emp.name} Checked In`,
+      description: `Logged check-in status at ${att.checkIn}`,
+      time: att.date,
+    });
   });
 
   leaves.slice(0, 2).forEach((lv) => {
-    systemActivities.push({
-      id: `sys-lv-${lv.id}`,
+    activities.push({
+      id: `lv-${lv.id}`,
       type: lv.status === "Approved" ? "leave_approved" : lv.status === "Rejected" ? "leave_rejected" : "leave_apply",
-      title: `${lv.employeeName} applied for ${lv.leaveType}`,
-      description: `Status: ${lv.status} | Days: ${lv.days}`,
+      title: `Leave ${lv.status}`,
+      description: `${lv.employeeName} submitted a ${lv.leaveType} request.`,
       time: lv.startDate,
     });
   });
 
-  const sortedActivities = systemActivities.sort((a, b) => b.id.localeCompare(a.id)).slice(0, 5);
+  const sortedActivities = activities.sort((a, b) => b.id.localeCompare(a.id)).slice(0, 4);
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-900">Admin Analytics Dashboard</h2>
-          <p className="text-xs text-slate-400 mt-1">Real-time indicators across workforce headcount, daily logins, leaves, and salary operations.</p>
+          <h2 className="text-xl font-bold text-slate-900">Welcome Back, {currentUser.name}</h2>
+          <p className="text-xs text-slate-400 mt-1">Here is the workforce status overview for Dayflow HR systems.</p>
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="danger" className="py-1 px-3">
-            Admin Mode
+            Admin Console
           </Badge>
-          <span className="text-xs font-semibold text-slate-400">System Online</span>
+          <Link to={PATHS.ADMIN_EMPLOYEES}>
+            <Button size="sm" className="flex items-center gap-1.5 text-xs py-1.5 px-3">
+              <UserPlus className="w-3.5 h-3.5" /> Add Employee
+            </Button>
+          </Link>
         </div>
       </div>
 
-      {/* Main Admin Cards */}
+      {/* Corporate Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Total Employees" value={totalEmployees} icon={Users} description="Registered active staff" />
-        <StatCard title="Present Today" value={`${presentToday} / ${totalEmployees}`} icon={UserCheck} description="Checked in today" />
-        <StatCard title="Pending Leaves" value={pendingLeaves} icon={CalendarClock} description="Awaiting HR approval" trend={pendingLeaves > 0 ? "ATTENTION" : null} trendType="down" />
         <StatCard
-          title="Monthly Payroll"
-          value={new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(totalMonthlyPayroll)}
-          icon={CreditCard}
-          description="Total payout cost log"
+          title="Total Staff"
+          value={totalEmployees}
+          icon={Users}
+          description={`${activeEmployees} active workforce accounts`}
+        />
+        <StatCard
+          title="Attendance Rate"
+          value={`${attendanceRate}%`}
+          icon={UserCheck}
+          description={`${presentToday} employees present today`}
+        />
+        <StatCard
+          title="Pending Leaves"
+          value={pendingLeaves}
+          icon={CalendarDays}
+          description={`${totalLeavesApplied} total leave applications`}
+        />
+        <StatCard
+          title="Payroll Expenses"
+          value={formatCurrency(totalPayrollExpenses)}
+          icon={ClipboardList}
+          description="Operational salary payouts"
         />
       </div>
 
-      {/* Quick actions row */}
-      <div>
-        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Quick Actions</h3>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {actions.map((act) => {
-            const Icon = act.icon;
-            return (
-              <Link key={act.title} to={act.path}>
-                <Card className="hover:border-brand-300 hover:shadow-premium-lg transition-all duration-200">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 bg-brand-50 rounded-xl text-brand-600">
-                      <Icon className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-slate-800 flex items-center gap-1">
-                        {act.title} <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </h4>
-                      <p className="text-[10px] text-slate-400 mt-0.5">{act.description}</p>
-                    </div>
-                  </div>
-                </Card>
-              </Link>
-            );
-          })}
-        </div>
+      {/* Attendance & Leave Quick Actions */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="flex flex-col justify-between">
+          <div>
+            <CardHeader>
+              <CardTitle>Attendance Quick Action</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-semibold text-slate-800">Present Today</h4>
+                  <p className="text-[10px] text-slate-400 mt-0.5">Out of {totalEmployees} registered staff</p>
+                </div>
+                <span className="text-xl font-bold text-slate-800">{presentToday}</span>
+              </div>
+              <p className="text-xs text-slate-400">
+                Weekly stats are consolidated automatically under the Attendance register tab.
+              </p>
+            </CardContent>
+          </div>
+          <div className="p-6 pt-0">
+            <Link to={PATHS.ADMIN_ATTENDANCE}>
+              <Button variant="secondary" className="w-full justify-center gap-1">
+                View Attendance Register <ArrowRight className="w-4.5 h-4.5" />
+              </Button>
+            </Link>
+          </div>
+        </Card>
+
+        {/* Leave Requests Overview */}
+        <Card className="flex flex-col justify-between">
+          <div>
+            <CardHeader>
+              <CardTitle>Pending Leave Requests</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex justify-between items-center text-xs font-semibold py-2.5 border-b border-slate-100">
+                <span className="text-slate-500">Total Pending Requests</span>
+                <span className="text-amber-600 font-bold">{pendingLeaves} Requests</span>
+              </div>
+              <p className="text-xs text-slate-400">
+                Pending applications require quick action to ensure correct monthly schedule allocation.
+              </p>
+            </CardContent>
+          </div>
+          <div className="p-6 pt-0">
+            <Link to={PATHS.ADMIN_LEAVES}>
+              <Button variant="secondary" className="w-full justify-center gap-1">
+                Process Leave Applications <ArrowRight className="w-4.5 h-4.5" />
+              </Button>
+            </Link>
+          </div>
+        </Card>
+
+        {/* Payroll Summary */}
+        <Card className="flex flex-col justify-between">
+          <div>
+            <CardHeader>
+              <CardTitle>Monthly Payroll Cost</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="p-4 bg-emerald-50/50 border border-emerald-100 rounded-xl">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">MONTHLY SALARY EXPENSES</p>
+                <h3 className="text-2xl font-extrabold text-emerald-800 mt-1">
+                  {formatCurrency(totalPayrollExpenses)}
+                </h3>
+              </div>
+              <p className="text-xs text-slate-400">
+                Payroll updates are compiled based on active base values and active deductions logs.
+              </p>
+            </CardContent>
+          </div>
+          <div className="p-6 pt-0">
+            <Link to={PATHS.ADMIN_PAYROLL}>
+              <Button variant="secondary" className="w-full justify-center gap-1">
+                Manage Corporate Payroll <ArrowRight className="w-4.5 h-4.5" />
+              </Button>
+            </Link>
+          </div>
+        </Card>
       </div>
 
-      {/* Chart layouts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <LeaveChart title="Employee Headcount by Department" data={deptChartData} />
+          <AttendanceChart title="Average Daily Working Hours" data={chartData} />
         </div>
         <div>
           <RecentActivity activities={sortedActivities} />

@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useApp } from "../../context/AppContext";
+import { useAuth } from "../../hooks/useAuth";
+import { PATHS } from "../../constants/paths";
 import { Input } from "../../components/UI/Input";
 import { Select } from "../../components/UI/Select";
 import { Button } from "../../components/UI/Button";
 import { Sparkles, ArrowRight } from "lucide-react";
 
 export const Register = () => {
-  const { register } = useApp();
+  const { register } = useAuth();
   const navigate = useNavigate();
 
   const [employeeId, setEmployeeId] = useState("");
@@ -39,13 +40,13 @@ export const Register = () => {
     return Object.keys(tempErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!handleValidation()) return;
 
-    const success = register(employeeId, name, email, password, role);
+    const success = await register(employeeId, name, email, password, role);
     if (success) {
-      navigate("/login");
+      navigate(PATHS.LOGIN);
     }
   };
 
@@ -165,7 +166,7 @@ export const Register = () => {
 
           <div className="text-center mt-5 text-xs text-slate-500">
             Already have an account?{" "}
-            <Link to="/login" className="font-semibold text-brand-600 hover:text-brand-700 transition-colors">
+            <Link to={PATHS.LOGIN} className="font-semibold text-brand-600 hover:text-brand-700 transition-colors">
               Sign in
             </Link>
           </div>
@@ -174,3 +175,4 @@ export const Register = () => {
     </div>
   );
 };
+export default Register;

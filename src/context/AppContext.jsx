@@ -13,7 +13,6 @@ export const AppProvider = ({ children }) => {
   const [attendance, setAttendance] = useState([]);
   const [leaves, setLeaves] = useState([]);
   const [payroll, setPayroll] = useState([]);
-  const [currentUser, setCurrentUser] = useState(null);
   const [toasts, setToasts] = useState([]);
 
   // Load from localStorage or set initial data
@@ -48,11 +47,6 @@ export const AppProvider = ({ children }) => {
     } else {
       localStorage.setItem("dayflow_payroll", JSON.stringify(initialPayroll));
       setPayroll(initialPayroll);
-    }
-
-    const sessionUser = localStorage.getItem("dayflow_current_user");
-    if (sessionUser) {
-      setCurrentUser(JSON.parse(sessionUser));
     }
   }, []);
 
@@ -90,101 +84,24 @@ export const AppProvider = ({ children }) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
-  // Auth Operations
-  const login = (email, password) => {
-    // Find in employees list
-    const found = employees.find((emp) => emp.email.toLowerCase() === email.toLowerCase());
-    if (!found) {
-      addToast("Invalid email or password", "error");
-      return false;
-    }
-    // Simple password validation for demo: any password matching rules or just non-empty
-    if (password.length < 4) {
-      addToast("Password must be at least 4 characters", "error");
-      return false;
-    }
-    
-    // Set current user
-    setCurrentUser(found);
-    localStorage.setItem("dayflow_current_user", JSON.stringify(found));
-    addToast(`Welcome back, ${found.name}!`, "success");
-    return found;
-  };
-
-  const logout = () => {
-    setCurrentUser(null);
-    localStorage.removeItem("dayflow_current_user");
-    addToast("Logged out successfully", "info");
-  };
-
-  const register = (employeeId, name, email, password, role) => {
-    // Check if employeeId or email already exists
-    const idExists = employees.some((emp) => emp.id === employeeId);
-    const emailExists = employees.some((emp) => emp.email.toLowerCase() === email.toLowerCase());
-
-    if (idExists) {
-      addToast("Employee ID already registered", "error");
-      return false;
-    }
-    if (emailExists) {
-      addToast("Email address already registered", "error");
-      return false;
-    }
-
-    const newEmp = {
-      id: employeeId,
-      name,
-      email,
-      phone: "+91 99999 88888",
-      address: "Update Address",
-      dob: "1995-01-01",
-      department: "Engineering",
-      position: role === "admin" ? "HR Admin" : "Software Engineer",
-      joiningDate: new Date().toISOString().split("T")[0],
-      status: "Active",
-      role: role,
-      avatar: `https://api.dicebear.com/7.x/adventurer/svg?seed=${name}`,
-      basicSalary: 60000,
-      allowances: 10000,
-      bonus: 0,
-      deductions: 3000,
-    };
-
-    const updated = [newEmp, ...employees];
-    saveEmployees(updated);
-
-    // Auto-generate starting payroll entry for the month
-    const newPayroll = {
-      id: `PAY-${Date.now()}`,
-      employeeId: newEmp.id,
-      employeeName: newEmp.name,
-      department: newEmp.department,
-      month: "August",
-      year: 2026,
-      basicSalary: newEmp.basicSalary,
-      allowances: newEmp.allowances,
-      bonus: 0,
-      deductions: newEmp.deductions,
-      netSalary: newEmp.basicSalary + newEmp.allowances - newEmp.deductions,
-      paymentDate: "-",
-      status: "Processing"
-    };
-    savePayroll([newPayroll, ...payroll]);
-
-    addToast("Registration successful! You can now log in.", "success");
-    return true;
-  };
-
   // Profile Edit
-  const updateProfile = (employeeId, { phone, address, name }) => {
+  const updateProfile = (employeeId, { phone, address, name }, syncProfileChange) => {
     const updated = employees.map((emp) => {
       if (emp.id === employeeId) {
         const item = { ...emp, phone, address };
         if (name) item.name = name;
-        if (currentUser && currentUser.id === employeeId) {
-          const updatedUser = { ...currentUser, ...item };
-          setCurrentUser(updatedUser);
-          localStorage.setItem("dayflow_current_user", JSON.stringify(updatedUser));
+        
+        // Sync back to AuthContext session if matching logged-in user
+        const sessionUser = localStorage.getItem("dayflow_current_user");
+        if (sessionUser) {
+          const userObj = JSON.parse(sessionUser);
+          if (userObj.id === employeeId) {
+            const updatedUser = { ...userObj, ...item };
+            localStorage.setItem("dayflow_current_user", JSON.stringify(updatedUser));
+            if (syncProfileChange) {
+              syncProfileChange(updatedUser);
+            }
+          }
         }
         return item;
       }
@@ -197,7 +114,6 @@ export const AppProvider = ({ children }) => {
   // Check In/Out
   const checkIn = (employeeId) => {
     const todayStr = new Date().toISOString().split("T")[0];
-    // Check if already checked in today
     const alreadyChecked = attendance.find(
       (att) => att.employeeId === employeeId && att.date === todayStr
     );
@@ -239,8 +155,6 @@ export const AppProvider = ({ children }) => {
     }
 
     const checkOutTime = new Date().toLocaleTimeString("en-US", { hour12: false, hour: '2-digit', minute: '2-digit' });
-    
-    // Calculate simple duration
     const [inH, inM] = record.checkIn.split(":").map(Number);
     const [outH, outM] = checkOutTime.split(":").map(Number);
     
@@ -264,11 +178,11 @@ export const AppProvider = ({ children }) => {
   };
 
   // Leave Management
-  const applyLeave = (leaveDetails) => {
+  const applyLeave = (leaveDetails, currentUserId, currentUserName) => {
     const newRequest = {
       id: `LR-${Date.now()}`,
-      employeeId: currentUser.id,
-      employeeName: currentUser.name,
+      employeeId: currentUserId,
+      employeeName: currentUserName,
       ...leaveDetails,
       status: "Pending",
     };
@@ -332,13 +246,7 @@ export const AppProvider = ({ children }) => {
   const editEmployee = (id, updatedDetails) => {
     const updatedList = employees.map((emp) => {
       if (emp.id === id) {
-        const item = { ...emp, ...updatedDetails };
-        if (currentUser && currentUser.id === id) {
-          const updatedUser = { ...currentUser, ...item };
-          setCurrentUser(updatedUser);
-          localStorage.setItem("dayflow_current_user", JSON.stringify(updatedUser));
-        }
-        return item;
+        return { ...emp, ...updatedDetails };
       }
       return emp;
     });
@@ -372,7 +280,6 @@ export const AppProvider = ({ children }) => {
   const deleteEmployee = (id) => {
     const updated = employees.filter((emp) => emp.id !== id);
     saveEmployees(updated);
-    // clean leaves and attendance
     saveLeaves(leaves.filter((lv) => lv.employeeId !== id));
     saveAttendance(attendance.filter((att) => att.employeeId !== id));
     savePayroll(payroll.filter((pay) => pay.employeeId !== id));
@@ -381,7 +288,6 @@ export const AppProvider = ({ children }) => {
 
   // Salary Edit Modal
   const editSalary = (employeeId, { basicSalary, allowances, bonus, deductions }) => {
-    // Update employee master list
     const updatedEmp = employees.map((emp) => {
       if (emp.id === employeeId) {
         return {
@@ -396,7 +302,6 @@ export const AppProvider = ({ children }) => {
     });
     saveEmployees(updatedEmp);
 
-    // Update payroll logs
     const updatedPay = payroll.map((pay) => {
       if (pay.employeeId === employeeId) {
         const basic = Number(basicSalary);
@@ -426,13 +331,9 @@ export const AppProvider = ({ children }) => {
         attendance,
         leaves,
         payroll,
-        currentUser,
         toasts,
         addToast,
         removeToast,
-        login,
-        logout,
-        register,
         updateProfile,
         checkIn,
         checkOut,

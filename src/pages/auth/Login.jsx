@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useApp } from "../../context/AppContext";
+import { useAuth } from "../../hooks/useAuth";
+import { PATHS } from "../../constants/paths";
 import { Input } from "../../components/UI/Input";
 import { Button } from "../../components/UI/Button";
 import { Sparkles, ArrowRight, ShieldCheck, User } from "lucide-react";
 
 export const Login = () => {
-  const { login } = useApp();
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
@@ -25,32 +26,32 @@ export const Login = () => {
     return Object.keys(tempErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!handleValidation()) return;
 
-    const user = login(email, password);
+    const user = await login(email, password);
     if (user) {
       if (user.role === "admin") {
-        navigate("/admin/dashboard");
+        navigate(PATHS.ADMIN_DASHBOARD);
       } else {
-        navigate("/employee/dashboard");
+        navigate(PATHS.EMPLOYEE_DASHBOARD);
       }
     }
   };
 
-  // Helper for judges and testing
-  const handleDemoLogin = (role) => {
+  // Helper for quick testing
+  const handleDemoLogin = async (role) => {
     if (role === "admin") {
       setEmail("neha.patel@dayflow.com");
       setPassword("admin123");
-      const user = login("neha.patel@dayflow.com", "admin123");
-      if (user) navigate("/admin/dashboard");
+      const user = await login("neha.patel@dayflow.com", "admin123");
+      if (user) navigate(PATHS.ADMIN_DASHBOARD);
     } else {
       setEmail("aarav.sharma@dayflow.com");
       setPassword("pass123");
-      const user = login("aarav.sharma@dayflow.com", "pass123");
-      if (user) navigate("/employee/dashboard");
+      const user = await login("aarav.sharma@dayflow.com", "pass123");
+      if (user) navigate(PATHS.EMPLOYEE_DASHBOARD);
     }
   };
 
@@ -58,7 +59,6 @@ export const Login = () => {
     <div className="min-h-screen flex">
       {/* Left split pane - Branding & taglines */}
       <div className="hidden lg:flex lg:w-1/2 bg-brand-950 text-white flex-col justify-between p-12 relative overflow-hidden">
-        {/* Background art details */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-brand-800/10 rounded-full blur-3xl -mr-16 -mt-16" />
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-brand-500/10 rounded-full blur-3xl -ml-16 -mb-16" />
 
@@ -163,7 +163,7 @@ export const Login = () => {
 
           <div className="text-center mt-6 text-xs text-slate-500">
             Don't have an account?{" "}
-            <Link to="/register" className="font-semibold text-brand-600 hover:text-brand-700 transition-colors">
+            <Link to={PATHS.REGISTER} className="font-semibold text-brand-600 hover:text-brand-700 transition-colors">
               Register now
             </Link>
           </div>
@@ -172,3 +172,4 @@ export const Login = () => {
     </div>
   );
 };
+export default Login;

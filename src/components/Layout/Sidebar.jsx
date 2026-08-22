@@ -14,31 +14,32 @@ import {
   Landmark,
   FileBarChart2
 } from "lucide-react";
-import { useApp } from "../../context/AppContext";
+import { useAuth } from "../../hooks/useAuth";
+import { PATHS } from "../../constants/paths";
 
 export const Sidebar = ({ isOpen, toggleSidebar }) => {
-  const { currentUser, logout } = useApp();
+  const { currentUser, logout } = useAuth();
 
   if (!currentUser) return null;
 
   const isAdmin = currentUser.role === "admin";
 
   const employeeLinks = [
-    { name: "Dashboard", path: "/employee/dashboard", icon: LayoutDashboard },
-    { name: "My Profile", path: "/employee/profile", icon: User },
-    { name: "Attendance", path: "/employee/attendance", icon: CalendarCheck },
-    { name: "Leave", path: "/employee/leave", icon: CalendarDays },
-    { name: "Payroll", path: "/employee/payroll", icon: CreditCard },
+    { name: "Dashboard", path: PATHS.EMPLOYEE_DASHBOARD, icon: LayoutDashboard },
+    { name: "My Profile", path: PATHS.EMPLOYEE_PROFILE, icon: User },
+    { name: "Attendance", path: PATHS.EMPLOYEE_ATTENDANCE, icon: CalendarCheck },
+    { name: "Leave", path: PATHS.EMPLOYEE_LEAVE, icon: CalendarDays },
+    { name: "Payroll", path: PATHS.EMPLOYEE_PAYROLL, icon: CreditCard },
   ];
 
   const adminLinks = [
-    { name: "Dashboard", path: "/admin/dashboard", icon: LayoutDashboard },
-    { name: "Employees", path: "/admin/employees", icon: Users },
-    { name: "Attendance", path: "/admin/attendance", icon: CalendarCheck },
-    { name: "Leave Requests", path: "/admin/leaves", icon: ClipboardList },
-    { name: "Payroll", path: "/admin/payroll", icon: CreditCard },
-    { name: "Departments", path: "/admin/departments", icon: Landmark },
-    { name: "Reports", path: "/admin/reports", icon: FileBarChart2 },
+    { name: "Dashboard", path: PATHS.ADMIN_DASHBOARD, icon: LayoutDashboard },
+    { name: "Employees", path: PATHS.ADMIN_EMPLOYEES, icon: Users },
+    { name: "Attendance", path: PATHS.ADMIN_ATTENDANCE, icon: CalendarCheck },
+    { name: "Leave Requests", path: PATHS.ADMIN_LEAVES, icon: ClipboardList },
+    { name: "Payroll", path: PATHS.ADMIN_PAYROLL, icon: CreditCard },
+    { name: "Departments", path: PATHS.ADMIN_DEPARTMENTS, icon: Landmark },
+    { name: "Reports", path: PATHS.ADMIN_REPORTS, icon: FileBarChart2 },
   ];
 
   const links = isAdmin ? adminLinks : employeeLinks;
@@ -75,7 +76,7 @@ export const Sidebar = ({ isOpen, toggleSidebar }) => {
             </span>
           </div>
 
-          {/* Role Badge inside Sidebar for demo clarity */}
+          {/* Role Badge inside Sidebar */}
           <div className="px-6 mb-6">
             <div className="p-3.5 bg-slate-50 border border-slate-100 rounded-xl">
               <div className="flex items-center gap-2.5">
@@ -118,7 +119,7 @@ export const Sidebar = ({ isOpen, toggleSidebar }) => {
         {/* Footer actions */}
         <div className="px-3.5 space-y-1 border-t border-slate-100 pt-4">
           <NavLink
-            to={isAdmin ? "/admin/settings" : "/employee/settings"}
+            to={isAdmin ? PATHS.ADMIN_SETTINGS : PATHS.EMPLOYEE_SETTINGS}
             onClick={() => toggleSidebar(false)}
             className={({ isActive }) => (isActive ? activeClass : inactiveClass)}
           >
@@ -140,3 +141,4 @@ export const Sidebar = ({ isOpen, toggleSidebar }) => {
     </>
   );
 };
+export default Sidebar;

@@ -1,6 +1,9 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { useApp } from "../../context/AppContext";
+import { useAuth } from "../../hooks/useAuth";
+import { PATHS } from "../../constants/paths";
+import { formatCurrency } from "../../utils/format";
 import { StatCard } from "../../components/Dashboard/StatCard";
 import { AttendanceChart } from "../../components/Dashboard/AttendanceChart";
 import { RecentActivity } from "../../components/Dashboard/RecentActivity";
@@ -10,7 +13,8 @@ import { Badge } from "../../components/UI/Badge";
 import { Calendar, Clock, Landmark, CreditCard, ChevronRight, Play, Square } from "lucide-react";
 
 export const Dashboard = () => {
-  const { currentUser, attendance, leaves, payroll, checkIn, checkOut } = useApp();
+  const { currentUser } = useAuth();
+  const { attendance, leaves, payroll, checkIn, checkOut } = useApp();
 
   if (!currentUser) return null;
 
@@ -27,12 +31,11 @@ export const Dashboard = () => {
   const employeeLeaves = leaves.filter((lv) => lv.employeeId === currentUser.id);
   const pendingLeaves = employeeLeaves.filter((lv) => lv.status === "Pending").length;
   const approvedLeaves = employeeLeaves.filter((lv) => lv.status === "Approved").length;
-  const leaveBalance = 15 - approvedLeaves; // Let's say base is 15 days
+  const leaveBalance = 15 - approvedLeaves;
 
   const employeePayroll = payroll.filter((pay) => pay.employeeId === currentUser.id);
   const latestPay = employeePayroll[0] || { netSalary: currentUser.basicSalary + currentUser.allowances - currentUser.deductions, month: "July", paymentDate: "2026-07-31" };
 
-  // Generate chart data for current user's last 5 attendance entries
   const chartData = employeeAttendance
     .slice(0, 5)
     .reverse()
@@ -42,7 +45,6 @@ export const Dashboard = () => {
       return { name, hours: att.hours || 0 };
     });
 
-  // Recent activity logs for current user
   const userActivities = [];
   employeeAttendance.slice(0, 3).forEach((att) => {
     if (att.checkIn) {
@@ -76,7 +78,6 @@ export const Dashboard = () => {
 
   const sortedActivities = userActivities.sort((a, b) => b.id.localeCompare(a.id)).slice(0, 4);
 
-  // Greeting helper
   const getGreeting = () => {
     const hours = new Date().getHours();
     if (hours < 12) return "Good morning";
@@ -133,9 +134,8 @@ export const Dashboard = () => {
         />
       </div>
 
-      {/* Middle dashboard cards: Clock In/Out & Leave summary */}
+      {/* Middle dashboard cards */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Clock In / Out control */}
         <Card className="flex flex-col justify-between">
           <div>
             <CardHeader>
@@ -198,7 +198,7 @@ export const Dashboard = () => {
             </CardContent>
           </div>
           <div className="p-6 pt-0">
-            <Link to="/employee/leave">
+            <Link to={PATHS.EMPLOYEE_LEAVE}>
               <Button variant="secondary" className="w-full justify-center gap-1">
                 Manage Leaves <ChevronRight className="w-4 h-4" />
               </Button>
@@ -206,7 +206,7 @@ export const Dashboard = () => {
           </div>
         </Card>
 
-        {/* Payroll Card summary */}
+        {/* Payroll Card */}
         <Card className="flex flex-col justify-between">
           <div>
             <CardHeader>
@@ -216,7 +216,7 @@ export const Dashboard = () => {
               <div className="p-4 bg-emerald-50/50 border border-emerald-100 rounded-xl">
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">LATEST MONTHLY SALARY</p>
                 <h3 className="text-2xl font-extrabold text-emerald-800 mt-1">
-                  {new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(latestPay.netSalary)}
+                  {formatCurrency(latestPay.netSalary)}
                 </h3>
                 <span className="inline-block text-[10px] font-bold text-emerald-700 bg-emerald-100/55 rounded px-2 py-0.5 mt-2">
                   Status: Paid ({latestPay.month})
@@ -228,7 +228,7 @@ export const Dashboard = () => {
             </CardContent>
           </div>
           <div className="p-6 pt-0">
-            <Link to="/employee/payroll">
+            <Link to={PATHS.EMPLOYEE_PAYROLL}>
               <Button variant="secondary" className="w-full justify-center gap-1">
                 View Payslip details <ChevronRight className="w-4 h-4" />
               </Button>
@@ -237,7 +237,6 @@ export const Dashboard = () => {
         </Card>
       </div>
 
-      {/* Attendance Chart & Recent Activities */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <AttendanceChart title="My Weekly Working Hours Trend" data={chartData} />

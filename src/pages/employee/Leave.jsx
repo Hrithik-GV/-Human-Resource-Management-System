@@ -1,68 +1,50 @@
 import React, { useState } from "react";
 import { useApp } from "../../context/AppContext";
-import { LeaveTable } from "../../components/Employee/LeaveTable";
-import { StatCard } from "../../components/Dashboard/StatCard";
+import { useAuth } from "../../hooks/useAuth";
 import { Card, CardHeader, CardTitle, CardContent } from "../../components/UI/Card";
-import { Button } from "../../components/UI/Button";
-import { Modal } from "../../components/UI/Modal";
+import { Table, THead, TBody, TR, TH, TD } from "../../components/UI/Table";
 import { Input } from "../../components/UI/Input";
 import { Select } from "../../components/UI/Select";
-import { CalendarRange, Sparkles, Send } from "lucide-react";
+import { Button } from "../../components/UI/Button";
+import { Badge } from "../../components/UI/Badge";
+import { Modal } from "../../components/UI/Modal";
+import { CalendarRange, Plus } from "lucide-react";
 
 export const Leave = () => {
-  const { currentUser, leaves, applyLeave } = useApp();
-  const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
+  const { currentUser } = useAuth();
+  const { leaves, applyLeave } = useApp();
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Apply Form State
+  // Leave Form
   const [leaveType, setLeaveType] = useState("Paid Leave");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [days, setDays] = useState(1);
   const [reason, setReason] = useState("");
-  const [errors, setErrors] = useState({});
 
   if (!currentUser) return null;
 
-  const userLeaves = leaves.filter((lv) => lv.employeeId === currentUser.id);
+  const myLeaves = leaves.filter((lv) => lv.employeeId === currentUser.id);
 
-  // Leave balances (Total available minus approved)
-  const approvedPaid = userLeaves.filter((l) => l.leaveType === "Paid Leave" && l.status === "Approved").reduce((a, c) => a + c.days, 0);
-  const approvedSick = userLeaves.filter((l) => l.leaveType === "Sick Leave" && l.status === "Approved").reduce((a, c) => a + c.days, 0);
-  const approvedUnpaid = userLeaves.filter((l) => l.leaveType === "Unpaid Leave" && l.status === "Approved").reduce((a, c) => a + c.days, 0);
-
-  const paidAvailable = Math.max(0, 12 - approvedPaid);
-  const sickAvailable = Math.max(0, 8 - approvedSick);
-
-  const handleValidation = () => {
-    const tempErrors = {};
-    if (!startDate) tempErrors.startDate = "Start date is required";
-    if (!endDate) tempErrors.endDate = "End date is required";
-    if (!reason) tempErrors.reason = "Reason for leave is required";
-    if (days <= 0) tempErrors.days = "Days must be greater than 0";
-
-    setErrors(tempErrors);
-    return Object.keys(tempErrors).length === 0;
-  };
-
-  const handleApply = (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    if (!handleValidation()) return;
-
-    applyLeave({
-      leaveType,
-      startDate,
-      endDate,
-      days: Number(days),
-      reason,
-    });
-
-    // Reset Form
+    applyLeave({ leaveType, startDate, endDate, reason }, currentUser.id, currentUser.name);
+    setIsModalOpen(false);
+    setReason("");
     setStartDate("");
     setEndDate("");
-    setDays(1);
-    setReason("");
-    setErrors({});
-    setIsApplyModalOpen(false);
+  };
+
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case "Approved":
+        return <Badge variant="success">Approved</Badge>;
+      case "Pending":
+        return <Badge variant="warning">Pending</Badge>;
+      case "Rejected":
+        return <Badge variant="danger">Rejected</Badge>;
+      default:
+        return <Badge variant="neutral">{status}</Badge>;
+    }
   };
 
   const leaveOptions = [
@@ -73,94 +55,105 @@ export const Leave = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex justify-between items-center">
         <div>
           <h2 className="text-xl font-bold text-slate-900">Leave Management</h2>
-          <p className="text-xs text-slate-400 mt-1">Submit new leave requests, monitor balances and view history.</p>
+          <p className="text-xs text-slate-400 mt-1">Apply for paid/sick leaves, and track previous requests logs.</p>
         </div>
-        <Button variant="primary" onClick={() => setIsApplyModalOpen(true)} className="flex items-center gap-1.5 self-start">
-          <CalendarRange className="w-4 h-4" /> Apply Leave
+        <Button onClick={() => setIsModalOpen(true)} className="flex items-center gap-1.5 py-2">
+          <Plus className="w-4 h-4" /> Request Leave
         </Button>
       </div>
 
-      {/* Leave Balance Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard title="Paid Leave Balance" value={`${paidAvailable} / 12 Days`} icon={Sparkles} description="Renewed annually" />
-        <StatCard title="Sick Leave Balance" value={`${sickAvailable} / 8 Days`} icon={Sparkles} description="Sick & emergency leaves" />
-        <StatCard title="Unpaid Leaves Logged" value={`${approvedUnpaid} Days`} icon={Sparkles} description="Loss of pay tracker" />
-      </div>
-
-      {/* Leave logs */}
       <Card>
         <CardHeader>
-          <CardTitle>Leave Application History</CardTitle>
+          <CardTitle>My Leave Requests</CardTitle>
         </CardHeader>
-        <CardContent>
-          <LeaveTable leaves={userLeaves} />
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <THead>
+                <TR>
+                  <TH>Leave Type</TH>
+                  <TH>Start Date</TH>
+                  <TH>End Date</TH>
+                  <TH>Reason</TH>
+                  <TH>Status</TH>
+                </TR>
+              </THead>
+              <TBody>
+                {myLeaves.length === 0 ? (
+                  <TR>
+                    <TD colSpan="5" className="text-center py-8 text-slate-400 font-medium">
+                      No leave requests submitted yet
+                    </TD>
+                  </TR>
+                ) : (
+                  myLeaves.map((row) => (
+                    <TR key={row.id}>
+                      <TD className="font-semibold text-slate-800">{row.leaveType}</TD>
+                      <TD className="text-slate-600">{row.startDate}</TD>
+                      <TD className="text-slate-600">{row.endDate}</TD>
+                      <TD className="text-slate-500 font-medium max-w-[200px] truncate" title={row.reason}>
+                        {row.reason}
+                        {row.status === "Rejected" && row.rejectionReason && (
+                          <span className="block text-[10px] font-bold text-red-500 mt-0.5">
+                            Rejection Reason: {row.rejectionReason}
+                          </span>
+                        )}
+                      </TD>
+                      <TD>{getStatusBadge(row.status)}</TD>
+                    </TR>
+                  ))
+                )}
+              </TBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Apply Leave Modal */}
-      <Modal isOpen={isApplyModalOpen} onClose={() => setIsApplyModalOpen(false)} title="Apply for Leave">
-        <form onSubmit={handleApply} className="space-y-4">
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Apply for Leave">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <Select
             label="Leave Type"
-            id="leaveType"
+            id="leave-type"
             value={leaveType}
             onChange={(e) => setLeaveType(e.target.value)}
             options={leaveOptions}
             required
           />
-
           <div className="grid grid-cols-2 gap-4">
             <Input
               label="Start Date"
-              id="startDate"
+              id="start-date"
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              error={errors.startDate}
               required
             />
             <Input
               label="End Date"
-              id="endDate"
+              id="end-date"
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              error={errors.endDate}
               required
             />
           </div>
-
-          <Input
-            label="Total Days"
-            id="days"
-            type="number"
-            min="1"
-            max="30"
-            value={days}
-            onChange={(e) => setDays(e.target.value)}
-            error={errors.days}
-            required
-          />
-
           <Input
             label="Reason for Leave"
             id="reason"
-            placeholder="Please detail your request reason..."
+            placeholder="Please detail your reason for leave request"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            error={errors.reason}
             required
           />
-
           <div className="flex justify-end gap-3.5 pt-4 border-t border-slate-100 mt-4">
-            <Button variant="secondary" onClick={() => setIsApplyModalOpen(false)}>
+            <Button variant="secondary" onClick={() => setIsModalOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" className="flex items-center gap-1.5">
-              <Send className="w-4 h-4" /> Submit Request
+            <Button type="submit" className="flex items-center gap-1">
+              Submit Application
             </Button>
           </div>
         </form>

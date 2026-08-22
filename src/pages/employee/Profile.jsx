@@ -1,14 +1,17 @@
 import React, { useState } from "react";
 import { useApp } from "../../context/AppContext";
+import { useAuth } from "../../hooks/useAuth";
+import { formatCurrency } from "../../utils/format";
 import { ProfileCard } from "../../components/Employee/ProfileCard";
 import { Card, CardHeader, CardTitle, CardContent } from "../../components/UI/Card";
 import { Input } from "../../components/UI/Input";
 import { Button } from "../../components/UI/Button";
 import { Modal } from "../../components/UI/Modal";
-import { FileText, Download, Phone, MapPin, User, Mail, ShieldAlert, Landmark } from "lucide-react";
+import { FileText, Download, User, Mail, ShieldAlert, Landmark } from "lucide-react";
 
 export const Profile = () => {
-  const { currentUser, updateProfile } = useApp();
+  const { currentUser, syncProfileChange } = useAuth();
+  const { updateProfile } = useApp();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Edit fields
@@ -20,16 +23,8 @@ export const Profile = () => {
 
   const handleSave = (e) => {
     e.preventDefault();
-    updateProfile(currentUser.id, { phone, address, name });
+    updateProfile(currentUser.id, { phone, address, name }, syncProfileChange);
     setIsEditModalOpen(false);
-  };
-
-  const formatCurrency = (val) => {
-    return new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency: "INR",
-      maximumFractionDigits: 0
-    }).format(val || 0);
   };
 
   return (

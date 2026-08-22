@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Bell, Search, Menu, LogOut, User, Settings, Check } from "lucide-react";
-import { useApp } from "../../context/AppContext";
+import { useAuth } from "../../hooks/useAuth";
+import { PATHS } from "../../constants/paths";
 import { Avatar } from "../UI/Avatar";
 import { Badge } from "../UI/Badge";
 
 export const Header = ({ title = "Dashboard", toggleSidebar }) => {
-  const { currentUser, logout } = useApp();
+  const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -123,7 +124,7 @@ export const Header = ({ title = "Dashboard", toggleSidebar }) => {
           {showProfileMenu && (
             <div className="absolute right-0 mt-2.5 w-48 bg-white border border-slate-100 rounded-xl shadow-premium-lg z-50 p-2 animate-fade-in">
               <Link
-                to="/employee/profile"
+                to={PATHS.EMPLOYEE_PROFILE}
                 onClick={() => setShowProfileMenu(false)}
                 className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors"
               >
@@ -131,7 +132,7 @@ export const Header = ({ title = "Dashboard", toggleSidebar }) => {
                 My Profile
               </Link>
               <Link
-                to={currentUser.role === "admin" ? "/admin/settings" : "/employee/settings"}
+                to={currentUser.role === "admin" ? PATHS.ADMIN_SETTINGS : PATHS.EMPLOYEE_SETTINGS}
                 onClick={() => setShowProfileMenu(false)}
                 className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors"
               >
@@ -156,3 +157,4 @@ export const Header = ({ title = "Dashboard", toggleSidebar }) => {
     </header>
   );
 };
+export default Header;

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useApp } from "../../context/AppContext";
+import { useAuth } from "../../hooks/useAuth";
 import { Card, CardHeader, CardTitle, CardContent } from "../../components/UI/Card";
 import { Button } from "../../components/UI/Button";
 import { Input } from "../../components/UI/Input";
@@ -7,7 +8,8 @@ import { Badge } from "../../components/UI/Badge";
 import { Settings as SettingsIcon, Bell, Lock, User, Shield } from "lucide-react";
 
 export const Settings = () => {
-  const { currentUser, addToast } = useApp();
+  const { addToast } = useApp();
+  const { currentUser } = useAuth();
 
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [weeklyDigest, setWeeklyDigest] = useState(false);

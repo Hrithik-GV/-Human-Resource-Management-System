@@ -1,91 +1,77 @@
-import React, { useState } from "react";
+import React from "react";
 import { useApp } from "../../context/AppContext";
-import { AttendanceTable } from "../../components/Employee/AttendanceTable";
-import { AttendanceChart } from "../../components/Dashboard/AttendanceChart";
-import { StatCard } from "../../components/Dashboard/StatCard";
-import { Select } from "../../components/UI/Select";
-import { CalendarCheck, CalendarDays, AlertCircle, FileSpreadsheet } from "lucide-react";
+import { useAuth } from "../../hooks/useAuth";
+import { Card, CardHeader, CardTitle, CardContent } from "../../components/UI/Card";
+import { Table, THead, TBody, TR, TH, TD } from "../../components/UI/Table";
+import { Badge } from "../../components/UI/Badge";
 
 export const Attendance = () => {
-  const { currentUser, attendance } = useApp();
-  const [selectedMonth, setSelectedMonth] = useState("08"); // August as default
+  const { currentUser } = useAuth();
+  const { attendance } = useApp();
 
   if (!currentUser) return null;
 
-  // Filter records for this user
-  const userRecords = attendance.filter((att) => att.employeeId === currentUser.id);
+  const records = attendance.filter((att) => att.employeeId === currentUser.id);
 
-  // Filter by selected month (date string format YYYY-MM-DD)
-  const filteredRecords = userRecords.filter((rec) => {
-    if (!selectedMonth) return true;
-    const parts = rec.date.split("-");
-    return parts[1] === selectedMonth;
-  });
-
-  // Calculate metrics
-  const totalDays = filteredRecords.length;
-  const present = filteredRecords.filter((r) => r.status === "Present").length;
-  const halfDays = filteredRecords.filter((r) => r.status === "Half Day").length;
-  const leaves = filteredRecords.filter((r) => r.status === "Leave").length;
-  const absent = filteredRecords.filter((r) => r.status === "Absent").length;
-
-  // Chart data
-  const chartData = [...filteredRecords]
-    .reverse()
-    .slice(0, 10)
-    .map((rec) => {
-      const date = new Date(rec.date);
-      const name = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-      return { name, hours: rec.hours || 0 };
-    });
-
-  const monthOptions = [
-    { value: "07", label: "July 2026" },
-    { value: "08", label: "August 2026" },
-    { value: "09", label: "September 2026" },
-  ];
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case "Present":
+        return <Badge variant="success">Present</Badge>;
+      case "Half Day":
+        return <Badge variant="warning">Half Day</Badge>;
+      case "Absent":
+        return <Badge variant="danger">Absent</Badge>;
+      default:
+        return <Badge variant="neutral">{status}</Badge>;
+    }
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-slate-900">My Attendance</h2>
-          <p className="text-xs text-slate-400 mt-1">Review your login logs, total hours, and work pattern statistics.</p>
-        </div>
-        <div className="w-full sm:w-48">
-          <Select
-            id="month-filter"
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
-            options={monthOptions}
-            placeholder="Select Month"
-          />
-        </div>
+      <div>
+        <h2 className="text-xl font-bold text-slate-900">My Attendance Records</h2>
+        <p className="text-xs text-slate-400 mt-1">Review your historical daily working logs, check-in schedules, and active statuses.</p>
       </div>
 
-      {/* Attendance Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <StatCard title="Total Days" value={totalDays} icon={FileSpreadsheet} className="!p-4" />
-        <StatCard title="Present Days" value={present} icon={CalendarCheck} className="!p-4" />
-        <StatCard title="Half Days" value={halfDays} icon={CalendarDays} className="!p-4" />
-        <StatCard title="Leaves taken" value={leaves} icon={CalendarDays} className="!p-4" />
-        <StatCard title="Absences" value={absent} icon={AlertCircle} className="!p-4 text-red-600" />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Table logs */}
-        <div className="lg:col-span-2 space-y-4">
-          <div className="bg-white border border-slate-100 rounded-xl p-6 shadow-premium">
-            <h3 className="text-sm font-bold text-slate-800 mb-4">Login Logs & Duration</h3>
-            <AttendanceTable records={filteredRecords} />
+      <Card>
+        <CardHeader>
+          <CardTitle>Attendance History</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <THead>
+                <TR>
+                  <TH>Date</TH>
+                  <TH>Check In</TH>
+                  <TH>Check Out</TH>
+                  <TH>Hours Logged</TH>
+                  <TH>Status</TH>
+                </TR>
+              </THead>
+              <TBody>
+                {records.length === 0 ? (
+                  <TR>
+                    <TD colSpan="5" className="text-center py-8 text-slate-400 font-medium">
+                      No attendance records found in system database
+                    </TD>
+                  </TR>
+                ) : (
+                  records.map((row) => (
+                    <TR key={row.id}>
+                      <TD className="font-semibold text-slate-800">{row.date}</TD>
+                      <TD className="text-slate-600">{row.checkIn || "-"}</TD>
+                      <TD className="text-slate-600">{row.checkOut || "-"}</TD>
+                      <TD className="font-bold text-slate-700">{row.hours ? `${row.hours} hrs` : "-"}</TD>
+                      <TD>{getStatusBadge(row.status)}</TD>
+                    </TR>
+                  ))
+                )}
+              </TBody>
+            </Table>
           </div>
-        </div>
-
-        {/* Daily chart trend */}
-        <div>
-          <AttendanceChart title="Working Hours Trend (Last 10 Entries)" data={chartData} />
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
