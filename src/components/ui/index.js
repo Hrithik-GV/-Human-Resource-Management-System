@@ -15,3 +15,4 @@ export * from './EmptyState';
 export * from './SearchBar';
 export * from './ConfirmationDialog';
 export * from './ToastWrapper';
+export * from './Pagination';

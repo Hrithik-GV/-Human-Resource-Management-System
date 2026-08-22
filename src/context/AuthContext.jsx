@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { authService } from '../services/authService';
 
 const AuthContext = createContext(null);
@@ -6,6 +6,28 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const refreshUser = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('dayflow_token');
+      if (!token) {
+        setCurrentUser(null);
+        return null;
+      }
+      const user = await authService.getCurrentUser(token);
+      if (user) {
+        setCurrentUser(user);
+        localStorage.setItem('dayflow_user', JSON.stringify(user));
+      }
+      return user;
+    } catch (err) {
+      console.error('Failed to refresh user credentials', err);
+      localStorage.removeItem('dayflow_token');
+      localStorage.removeItem('dayflow_user');
+      setCurrentUser(null);
+      return null;
+    }
+  }, []);
 
   useEffect(() => {
     const initAuth = async () => {
@@ -16,14 +38,9 @@ export const AuthProvider = ({ children }) => {
         if (token && savedUser) {
           setCurrentUser(JSON.parse(savedUser));
         } else if (token) {
-          const user = await authService.getCurrentUser(token);
-          if (user) {
-            setCurrentUser(user);
-            localStorage.setItem('dayflow_user', JSON.stringify(user));
-          }
+          await refreshUser();
         }
       } catch (err) {
-        console.error('Failed to restore auth state', err);
         localStorage.removeItem('dayflow_token');
         localStorage.removeItem('dayflow_user');
       } finally {
@@ -32,7 +49,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     initAuth();
-  }, []);
+  }, [refreshUser]);
 
   const login = async (email, password) => {
     setLoading(true);
@@ -75,6 +92,7 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
+    refreshUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
