@@ -11,14 +11,14 @@ export const Header = ({ title = "Dashboard", toggleSidebar }) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
 
-  if (!currentUser) return null;
-
   // Mock notifications list
   const [notifications, setNotifications] = useState([
     { id: 1, text: "Leave request approved by HR manager", time: "2 hours ago", read: false },
     { id: 2, text: "Payroll slip for July 2026 is available", time: "1 day ago", read: false },
     { id: 3, text: "Welcome to Dayflow HR portal!", time: "5 days ago", read: true },
   ]);
+
+  if (!currentUser) return null;
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
