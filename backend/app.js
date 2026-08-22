@@ -17,9 +17,10 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// CORS – allow the Vite dev frontend and any configured VITE_API_URL origin
+// CORS – allow Vite dev frontends (5173, 5174, etc) and configured CLIENT_URL
 const allowedOrigins = [
   'http://localhost:5173',
+  'http://localhost:5174',
   'http://localhost:3000',
   process.env.CLIENT_URL,
 ].filter(Boolean);
@@ -27,8 +28,8 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (e.g., Postman, server-to-server)
-      if (!origin || allowedOrigins.includes(origin)) {
+      // Allow requests with no origin or any localhost origin
+      if (!origin || allowedOrigins.includes(origin) || /^http:\/\/localhost:\d+$/.test(origin)) {
         callback(null, true);
       } else {
         callback(new Error(`CORS policy: Origin ${origin} not allowed`));
