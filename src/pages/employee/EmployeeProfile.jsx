@@ -61,6 +61,15 @@ export const EmployeeProfile = () => {
     }
   };
 
+  const handleOpenEditModal = () => {
+    reset({
+      phone: profile?.phone || '',
+      address: profile?.address || '',
+      avatar: profile?.avatar || '',
+    });
+    setIsEditModalOpen(true);
+  };
+
   const handleEditSubmit = async (formData) => {
     try {
       const updated = await employeeService.updateProfile(formData);
@@ -70,6 +79,13 @@ export const EmployeeProfile = () => {
       setIsEditModalOpen(false);
     } catch (err) {
       toast.error('Failed to update profile details.');
+    }
+  };
+
+  const handleEditError = (formErrors) => {
+    const firstErrKey = Object.keys(formErrors)[0];
+    if (firstErrKey) {
+      toast.error(formErrors[firstErrKey]?.message || 'Please fill in required fields.');
     }
   };
 
@@ -126,7 +142,7 @@ export const EmployeeProfile = () => {
               variant="outline"
               size="md"
               leftIcon={<Edit3 className="w-4 h-4 text-indigo-600" />}
-              onClick={() => setIsEditModalOpen(true)}
+              onClick={handleOpenEditModal}
               className="shrink-0"
             >
               Edit Profile
@@ -282,7 +298,7 @@ export const EmployeeProfile = () => {
           title="Edit Profile Information"
           description="Update your contact phone number, address, and profile picture avatar URL."
         >
-          <form onSubmit={handleSubmit(handleEditSubmit)} className="space-y-4">
+          <form onSubmit={handleSubmit(handleEditSubmit, handleEditError)} className="space-y-4">
             <Input
               label="Phone Number"
               type="text"

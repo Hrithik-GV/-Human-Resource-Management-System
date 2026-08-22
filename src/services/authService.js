@@ -79,6 +79,14 @@ export const authService = {
 
       return new Promise((resolve) => {
         if (!token) return resolve(null);
+        const savedUser = localStorage.getItem('dayflow_user');
+        if (savedUser) {
+          try {
+            return resolve(JSON.parse(savedUser));
+          } catch (e) {
+            // fallback
+          }
+        }
         const isAdmin = token.includes('admin');
         const mockUser = isAdmin ? MOCK_USERS[1] : MOCK_USERS[0];
         const userResponse = { ...mockUser };
