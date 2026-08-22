@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "../../components/UI/Ca
 import { Input } from "../../components/UI/Input";
 import { Button } from "../../components/UI/Button";
 import { Modal } from "../../components/UI/Modal";
-import { FileText, Download, Phone, MapPin, User, Mail, ShieldAlert } from "lucide-react";
+import { FileText, Download, Phone, MapPin, User, Mail, ShieldAlert, Landmark } from "lucide-react";
 
 export const Profile = () => {
   const { currentUser, updateProfile } = useApp();
