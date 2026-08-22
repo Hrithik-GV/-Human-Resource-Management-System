@@ -1,0 +1,50 @@
+export const MOCK_LEAVE_BALANCES = {
+  paidLeave: 12,
+  sickLeave: 7,
+  unpaidLeave: 5,
+  pendingRequests: 1,
+  approvedRequests: 4,
+};
+
+export const MOCK_LEAVE_HISTORY = [
+  {
+    id: 'LV-101',
+    leaveType: 'Paid Leave',
+    startDate: '2026-08-28',
+    endDate: '2026-08-29',
+    days: 2,
+    reason: 'Family event and personal obligations',
+    status: 'Pending',
+    appliedOn: '2026-08-20',
+  },
+  {
+    id: 'LV-100',
+    leaveType: 'Sick Leave',
+    startDate: '2026-08-14',
+    endDate: '2026-08-14',
+    days: 1,
+    reason: 'Medical checkup and recovery',
+    status: 'Approved',
+    appliedOn: '2026-08-13',
+  },
+  {
+    id: 'LV-098',
+    leaveType: 'Casual Leave',
+    startDate: '2026-07-10',
+    endDate: '2026-07-12',
+    days: 3,
+    reason: 'Vacation travel',
+    status: 'Approved',
+    appliedOn: '2026-07-01',
+  },
+  {
+    id: 'LV-095',
+    leaveType: 'Unpaid Leave',
+    startDate: '2026-06-05',
+    endDate: '2026-06-05',
+    days: 1,
+    reason: 'Personal work',
+    status: 'Rejected',
+    appliedOn: '2026-06-02',
+  },
+];
