@@ -1,18 +1,39 @@
 import api, { handleApiError } from './api';
-import {
-  MOCK_ATTENDANCE_SUMMARY,
-  MOCK_ATTENDANCE_LOGS,
-  MOCK_ATTENDANCE_WEEKLY_TREND,
-  MOCK_ATTENDANCE_MONTHLY_TREND,
-} from '../data/attendance';
 
-let currentSummary = { ...MOCK_ATTENDANCE_SUMMARY };
-let currentLogs = [...MOCK_ATTENDANCE_LOGS];
+const normalizeRecord = (record) => {
+  const date = new Date(record.date);
+  return {
+    ...record,
+    id: record._id,
+    date: record.date?.slice(0, 10),
+    day: date.toLocaleDateString('en-US', { weekday: 'long' }),
+    checkIn: record.checkIn ? new Date(record.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-',
+    checkOut: record.checkOut ? new Date(record.checkOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-',
+    hours: record.checkIn && record.checkOut ? ((new Date(record.checkOut) - new Date(record.checkIn)) / 3600000).toFixed(2) : '0',
+  };
+};
+
+const getSummary = (records) => {
+  const today = new Date().toISOString().slice(0, 10);
+  const todayRecord = records.find((record) => record.date === today);
+  return {
+    presentDays: records.filter((record) => record.status === 'Present').length,
+    absentDays: records.filter((record) => record.status === 'Absent').length,
+    halfDays: records.filter((record) => record.status === 'Half Day').length,
+    leaveDays: records.filter((record) => record.status === 'Leave').length,
+    totalWorkingDays: records.length,
+    checkInTime: todayRecord?.checkIn || '-',
+    checkOutTime: todayRecord?.checkOut || '-',
+    todayStatus: todayRecord?.status || 'Absent',
+    isCheckedIn: Boolean(todayRecord?.checkIn && !todayRecord?.checkOut),
+  };
+};
 
 export const attendanceService = {
   getSummary: async () => {
     try {
-      return new Promise((resolve) => setTimeout(() => resolve({ ...currentSummary }), 300));
+      const response = await api.get('/attendance/my');
+      return getSummary(response.data.attendance.map(normalizeRecord));
     } catch (error) {
       throw new Error(handleApiError(error, 'Failed to fetch summary'));
     }
@@ -20,22 +41,8 @@ export const attendanceService = {
 
   getMyAttendance: async (filters = {}) => {
     try {
-      // Future Axios: const response = await api.get('/attendance/me', { params: filters }); return response.data;
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          let filtered = [...currentLogs];
-          if (filters.search) {
-            const q = filters.search.toLowerCase();
-            filtered = filtered.filter(
-              (log) =>
-                log.date.includes(q) ||
-                log.day.toLowerCase().includes(q) ||
-                log.status.toLowerCase().includes(q)
-            );
-          }
-          resolve(filtered);
-        }, 300);
-      });
+      const response = await api.get('/attendance/my', { params: filters });
+      return response.data.attendance.map(normalizeRecord);
     } catch (error) {
       throw new Error(handleApiError(error, 'Failed to fetch my attendance logs'));
     }
@@ -43,10 +50,8 @@ export const attendanceService = {
 
   getAllAttendance: async (filters = {}) => {
     try {
-      // Future Axios: const response = await api.get('/attendance/all', { params: filters }); return response.data;
-      return new Promise((resolve) => {
-        setTimeout(() => resolve([...currentLogs]), 300);
-      });
+      const response = await api.get('/attendance/all', { params: filters });
+      return response.data.attendance.map(normalizeRecord);
     } catch (error) {
       throw new Error(handleApiError(error, 'Failed to fetch attendance records'));
     }
@@ -58,7 +63,8 @@ export const attendanceService = {
 
   getWeeklyTrend: async () => {
     try {
-      return new Promise((resolve) => setTimeout(() => resolve([...MOCK_ATTENDANCE_WEEKLY_TREND]), 200));
+      const records = await attendanceService.getMyAttendance();
+      return records.slice(0, 5).reverse().map((record) => ({ name: record.day.slice(0, 3), hours: Number(record.hours) || 0 }));
     } catch (error) {
       throw new Error(handleApiError(error, 'Failed to fetch weekly trends'));
     }
@@ -66,7 +72,14 @@ export const attendanceService = {
 
   getMonthlyTrend: async () => {
     try {
-      return new Promise((resolve) => setTimeout(() => resolve([...MOCK_ATTENDANCE_MONTHLY_TREND]), 200));
+      const records = await attendanceService.getMyAttendance();
+      return records.reduce((trend, record) => {
+        const week = `Week ${Math.ceil(new Date(record.date).getDate() / 7)}`;
+        const item = trend.find((entry) => entry.name === week) || { name: week, present: 0, absent: 0 };
+        item[record.status === 'Present' ? 'present' : 'absent'] += 1;
+        if (!trend.includes(item)) trend.push(item);
+        return trend;
+      }, []);
     } catch (error) {
       throw new Error(handleApiError(error, 'Failed to fetch monthly trends'));
     }
@@ -74,19 +87,8 @@ export const attendanceService = {
 
   checkIn: async () => {
     try {
-      // Future Axios: const response = await api.post('/attendance/check-in'); return response.data;
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-          currentSummary = {
-            ...currentSummary,
-            isCheckedIn: true,
-            checkInTime: timeStr,
-            todayStatus: 'Present',
-          };
-          resolve({ ...currentSummary });
-        }, 300);
-      });
+      const response = await api.post('/attendance/checkin');
+      return getSummary([normalizeRecord(response.data.attendance)]);
     } catch (error) {
       throw new Error(handleApiError(error, 'Check-in failed'));
     }
@@ -94,18 +96,8 @@ export const attendanceService = {
 
   checkOut: async () => {
     try {
-      // Future Axios: const response = await api.post('/attendance/check-out'); return response.data;
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-          currentSummary = {
-            ...currentSummary,
-            isCheckedIn: false,
-            checkOutTime: timeStr,
-          };
-          resolve({ ...currentSummary });
-        }, 300);
-      });
+      const response = await api.post('/attendance/checkout');
+      return getSummary([normalizeRecord(response.data.attendance)]);
     } catch (error) {
       throw new Error(handleApiError(error, 'Check-out failed'));
     }

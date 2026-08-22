@@ -1,32 +1,20 @@
 import api, { handleApiError } from './api';
-import { MOCK_USERS } from '../data/mockUsers';
+
+const normalizeUser = (user) => ({
+  ...user,
+  id: user._id,
+  fullName: user.name,
+  position: user.designation,
+  title: user.designation,
+  avatar: user.profilePicture,
+  role: user.role?.toLowerCase(),
+});
 
 export const authService = {
   login: async (email, password) => {
     try {
-      // Future Axios implementation:
-      // const response = await api.post('/auth/login', { email, password });
-      // return response.data;
-
-      // Mock implementation ready for swap:
-      return new Promise((resolve, reject) => {
-        setTimeout(() => {
-          const foundUser = MOCK_USERS.find(
-            (u) => u.email.toLowerCase() === email.toLowerCase()
-          );
-
-          if (foundUser) {
-            const userResponse = { ...foundUser };
-            delete userResponse.password;
-            resolve({
-              user: userResponse,
-              token: `dayflow_jwt_mock_${userResponse.role}_${Date.now()}`,
-            });
-          } else {
-            reject(new Error('Invalid email or password'));
-          }
-        }, 300);
-      });
+      const response = await api.post('/auth/login', { email, password });
+      return { ...response.data, user: normalizeUser(response.data.user) };
     } catch (error) {
       throw new Error(handleApiError(error, 'Login failed'));
     }
@@ -34,65 +22,32 @@ export const authService = {
 
   register: async (userData) => {
     try {
-      // Future Axios implementation:
-      // const response = await api.post('/auth/register', userData);
-      // return response.data;
-
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          const newUser = {
-            id: userData.employeeId || `EMP-${Date.now().toString().slice(-4)}`,
-            employeeId: userData.employeeId,
-            fullName: userData.fullName,
-            email: userData.email,
-            role: userData.role || 'employee',
-            title: userData.role === 'admin' ? 'HR Director' : 'Software Engineer',
-            department: userData.role === 'admin' ? 'Human Resources' : 'Engineering',
-          };
-
-          resolve({
-            user: newUser,
-            token: `dayflow_jwt_mock_${newUser.role}_${Date.now()}`,
-          });
-        }, 300);
+      const response = await api.post('/auth/register', {
+        employeeId: userData.employeeId,
+        name: userData.fullName,
+        email: userData.email,
+        password: userData.password,
+        role: userData.role === 'admin' ? 'Admin' : 'Employee',
+        department: userData.department || (userData.role === 'admin' ? 'Human Resources' : 'General'),
+        designation: userData.designation || (userData.role === 'admin' ? 'HR Administrator' : 'Employee'),
+        phone: userData.phone || '0000000000',
+        address: userData.address || 'Not provided',
       });
+      return { ...response.data, user: normalizeUser(response.data.user) };
     } catch (error) {
       throw new Error(handleApiError(error, 'Registration failed'));
     }
   },
 
   logout: async () => {
-    try {
-      // Future Axios implementation:
-      // await api.post('/auth/logout');
-      return Promise.resolve(true);
-    } catch (error) {
-      return Promise.resolve(true);
-    }
+    return true;
   },
 
   getCurrentUser: async (token) => {
     try {
-      // Future Axios implementation:
-      // const response = await api.get('/auth/me');
-      // return response.data;
-
-      return new Promise((resolve) => {
-        if (!token) return resolve(null);
-        const savedUser = localStorage.getItem('dayflow_user');
-        if (savedUser) {
-          try {
-            return resolve(JSON.parse(savedUser));
-          } catch (e) {
-            // fallback
-          }
-        }
-        const isAdmin = token.includes('admin');
-        const mockUser = isAdmin ? MOCK_USERS[1] : MOCK_USERS[0];
-        const userResponse = { ...mockUser };
-        delete userResponse.password;
-        resolve(userResponse);
-      });
+      if (!token) return null;
+      const response = await api.get('/auth/me');
+      return normalizeUser(response.data.user);
     } catch (error) {
       throw new Error(handleApiError(error, 'Failed to fetch user profile'));
     }

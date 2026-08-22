@@ -14,7 +14,7 @@ export const ProtectedRoute = ({ allowedRole }) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (allowedRole && role !== allowedRole) {
+  if (allowedRole && role !== allowedRole.toLowerCase()) {
     // If role mismatch, redirect to the user's correct dashboard
     const targetDashboard = role === 'admin' ? '/admin/dashboard' : '/employee/dashboard';
     return <Navigate to={targetDashboard} replace />;

@@ -35,10 +35,11 @@ export const AuthProvider = ({ children }) => {
         const token = localStorage.getItem('dayflow_token');
         const savedUser = localStorage.getItem('dayflow_user');
 
-        if (token && savedUser) {
-          setCurrentUser(JSON.parse(savedUser));
-        } else if (token) {
-          await refreshUser();
+        if (token) {
+          const user = await refreshUser();
+          if (!user && savedUser) {
+            localStorage.removeItem('dayflow_user');
+          }
         }
       } catch (err) {
         localStorage.removeItem('dayflow_token');

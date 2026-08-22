@@ -1,13 +1,12 @@
 import api, { handleApiError } from './api';
-import { MOCK_PAYROLL_SUMMARY, MOCK_PAYMENT_HISTORY } from '../data/payroll';
 
-let currentPayrollSummary = { ...MOCK_PAYROLL_SUMMARY };
+const normalizePayroll = (payroll) => ({ ...payroll, id: payroll._id, grossSalary: payroll.basicSalary + payroll.bonus, totalDeductions: payroll.deductions, netSalary: payroll.netSalary, hraAllowance: 0, specialAllowance: 0, taxDeduction: payroll.deductions, pfDeduction: 0 });
 
 export const payrollService = {
   getSalarySummary: async () => {
     try {
-      // Future Axios: const response = await api.get('/payroll/summary'); return response.data;
-      return new Promise((resolve) => setTimeout(() => resolve({ ...currentPayrollSummary }), 300));
+      const response = await api.get('/payroll/my');
+      return normalizePayroll(response.data.payroll);
     } catch (error) {
       throw new Error(handleApiError(error, 'Failed to fetch payroll summary'));
     }
@@ -15,8 +14,9 @@ export const payrollService = {
 
   getPaymentHistory: async () => {
     try {
-      // Future Axios: const response = await api.get('/payroll/history'); return response.data;
-      return new Promise((resolve) => setTimeout(() => resolve([...MOCK_PAYMENT_HISTORY]), 300));
+      const response = await api.get('/payroll/my');
+      const payroll = normalizePayroll(response.data.payroll);
+      return [{ id: payroll.id, month: new Date(payroll.updatedAt).toLocaleString('en-US', { month: 'long', year: 'numeric' }), gross: payroll.grossSalary, deductions: payroll.totalDeductions, net: payroll.netSalary, paymentDate: payroll.updatedAt?.slice(0, 10), status: 'Paid' }];
     } catch (error) {
       throw new Error(handleApiError(error, 'Failed to fetch payment history'));
     }
@@ -28,13 +28,8 @@ export const payrollService = {
 
   updatePayroll: async (payrollData) => {
     try {
-      // Future Axios: const response = await api.put('/payroll', payrollData); return response.data;
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          currentPayrollSummary = { ...currentPayrollSummary, ...payrollData };
-          resolve({ ...currentPayrollSummary });
-        }, 300);
-      });
+      const response = await api.put(`/payroll/${payrollData.id}`, payrollData);
+      return normalizePayroll(response.data.payroll);
     } catch (error) {
       throw new Error(handleApiError(error, 'Failed to update payroll'));
     }

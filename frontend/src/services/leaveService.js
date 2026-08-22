@@ -1,14 +1,12 @@
 import api, { handleApiError } from './api';
-import { MOCK_LEAVE_BALANCES, MOCK_LEAVE_HISTORY } from '../data/leave';
 
-let currentBalances = { ...MOCK_LEAVE_BALANCES };
-let currentHistory = [...MOCK_LEAVE_HISTORY];
+const normalizeLeave = (leave) => ({ ...leave, id: leave._id, startDate: leave.fromDate?.slice(0, 10), endDate: leave.toDate?.slice(0, 10), appliedOn: leave.createdAt?.slice(0, 10), days: Math.ceil((new Date(leave.toDate) - new Date(leave.fromDate)) / 86400000) + 1 });
 
 export const leaveService = {
   getBalances: async () => {
     try {
-      // Future Axios: const response = await api.get('/leave/balances'); return response.data;
-      return new Promise((resolve) => setTimeout(() => resolve({ ...currentBalances }), 300));
+      const leaves = await leaveService.getMyLeaves();
+      return { paidLeave: 0, sickLeave: 0, unpaidLeave: 0, pendingRequests: leaves.filter((leave) => leave.status === 'Pending').length, approvedRequests: leaves.filter((leave) => leave.status === 'Approved').length };
     } catch (error) {
       throw new Error(handleApiError(error, 'Failed to fetch leave balances'));
     }
@@ -16,8 +14,8 @@ export const leaveService = {
 
   getMyLeaves: async () => {
     try {
-      // Future Axios: const response = await api.get('/leave/my-leaves'); return response.data;
-      return new Promise((resolve) => setTimeout(() => resolve([...currentHistory]), 300));
+      const response = await api.get('/leave/my');
+      return response.data.leaves.map(normalizeLeave);
     } catch (error) {
       throw new Error(handleApiError(error, 'Failed to fetch my leave requests'));
     }
@@ -29,8 +27,8 @@ export const leaveService = {
 
   getAllLeaves: async (filters = {}) => {
     try {
-      // Future Axios: const response = await api.get('/leave/all', { params: filters }); return response.data;
-      return new Promise((resolve) => setTimeout(() => resolve([...currentHistory]), 300));
+      const response = await api.get('/leave/all', { params: filters });
+      return response.data.leaves.map(normalizeLeave);
     } catch (error) {
       throw new Error(handleApiError(error, 'Failed to fetch all leave requests'));
     }
@@ -38,29 +36,8 @@ export const leaveService = {
 
   applyLeave: async (leaveData) => {
     try {
-      // Future Axios: const response = await api.post('/leave/apply', leaveData); return response.data;
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          const newRecord = {
-            id: `LV-${Math.floor(100 + Math.random() * 900)}`,
-            leaveType: leaveData.leaveType,
-            startDate: leaveData.startDate,
-            endDate: leaveData.endDate,
-            days: Number(leaveData.days),
-            reason: leaveData.reason,
-            status: 'Pending',
-            appliedOn: new Date().toISOString().split('T')[0],
-          };
-
-          currentHistory = [newRecord, ...currentHistory];
-          currentBalances = {
-            ...currentBalances,
-            pendingRequests: currentBalances.pendingRequests + 1,
-          };
-
-          resolve(newRecord);
-        }, 300);
-      });
+      const response = await api.post('/leave/apply', { ...leaveData, leaveType: leaveData.leaveType.replace(' Leave', '') });
+      return normalizeLeave(response.data.leave);
     } catch (error) {
       throw new Error(handleApiError(error, 'Leave application failed'));
     }
@@ -68,13 +45,8 @@ export const leaveService = {
 
   approveLeave: async (id) => {
     try {
-      // Future Axios: const response = await api.patch(`/leave/${id}/approve`); return response.data;
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          currentHistory = currentHistory.map((l) => (l.id === id ? { ...l, status: 'Approved' } : l));
-          resolve(true);
-        }, 300);
-      });
+      await api.patch(`/leave/${id}`, { status: 'Approved' });
+      return true;
     } catch (error) {
       throw new Error(handleApiError(error, 'Approval failed'));
     }
@@ -82,13 +54,8 @@ export const leaveService = {
 
   rejectLeave: async (id, reason) => {
     try {
-      // Future Axios: const response = await api.patch(`/leave/${id}/reject`, { reason }); return response.data;
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          currentHistory = currentHistory.map((l) => (l.id === id ? { ...l, status: 'Rejected', rejectionReason: reason } : l));
-          resolve(true);
-        }, 300);
-      });
+      await api.patch(`/leave/${id}`, { status: 'Rejected', adminComment: reason });
+      return true;
     } catch (error) {
       throw new Error(handleApiError(error, 'Rejection failed'));
     }
