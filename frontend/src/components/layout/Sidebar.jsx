@@ -36,31 +36,31 @@ export const Sidebar = ({
       {/* Mobile Backdrop */}
       {isMobileOpen && (
         <div
-          className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-40 lg:hidden"
+          className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-40 lg:hidden"
           onClick={onCloseMobile}
         />
       )}
 
       <aside
         className={cn(
-          'fixed top-0 left-0 z-40 h-screen bg-slate-900 text-white flex flex-col justify-between border-r border-slate-800 transition-all duration-300 ease-in-out shadow-lg',
+          'fixed top-0 left-0 z-40 h-screen bg-white text-slate-800 flex flex-col justify-between border-r border-slate-200/80 transition-all duration-300 ease-in-out shadow-xs',
           isCollapsed ? 'w-20' : 'w-64',
           isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         )}
       >
         {/* Top Header / Brand */}
         <div>
-          <div className="flex items-center justify-between h-16 px-4 border-b border-slate-800/80">
+          <div className="flex items-center justify-between h-16 px-4 border-b border-slate-100">
             <div className="flex items-center gap-3 overflow-hidden">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-500 flex items-center justify-center text-white shrink-0 shadow-md shadow-indigo-500/20">
                 <Sparkles className="w-5 h-5" />
               </div>
               {!isCollapsed && (
                 <div className="flex flex-col">
-                  <span className="font-bold text-lg tracking-tight text-white leading-none">
+                  <span className="font-extrabold text-lg tracking-tight text-slate-900 leading-none">
                     Dayflow
                   </span>
-                  <span className="text-[10px] uppercase font-semibold tracking-wider text-indigo-400 mt-1">
+                  <span className="text-[10px] uppercase font-semibold tracking-wider text-indigo-600 mt-1">
                     {role} portal
                   </span>
                 </div>
@@ -70,7 +70,7 @@ export const Sidebar = ({
             {/* Desktop Collapse Toggle */}
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="hidden lg:flex p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              className="hidden lg:flex p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
               title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
               {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
@@ -79,7 +79,7 @@ export const Sidebar = ({
             {/* Mobile Close Button */}
             <button
               onClick={onCloseMobile}
-              className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+              className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100"
             >
               <X className="w-5 h-5" />
             </button>
@@ -98,8 +98,8 @@ export const Sidebar = ({
                     cn(
                       'flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group relative',
                       isActive
-                        ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30 font-semibold'
-                        : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60'
+                        ? 'bg-indigo-600 text-white shadow-sm font-semibold'
+                        : 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50/70'
                     )
                   }
                   title={isCollapsed ? item.label : undefined}
@@ -113,7 +113,7 @@ export const Sidebar = ({
         </div>
 
         {/* Bottom Section */}
-        <div className="p-3 border-t border-slate-800/80 space-y-1.5">
+        <div className="p-3 border-t border-slate-100 space-y-1.5">
           {BOTTOM_NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const targetPath = item.path === '/settings' ? (role === 'admin' ? '/admin/settings' : '/employee/settings') : item.path;
@@ -129,7 +129,7 @@ export const Sidebar = ({
                       'flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group',
                       isActive
                         ? 'bg-indigo-600 text-white font-semibold'
-                        : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60'
+                        : 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50/70'
                     )
                   }
                   title={isCollapsed ? item.label : undefined}
@@ -147,7 +147,7 @@ export const Sidebar = ({
                   handleBottomAction(item);
                 }}
                 className={cn(
-                  'w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-all duration-200 group'
+                  'w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:text-rose-600 hover:bg-rose-50 transition-all duration-200 group'
                 )}
                 title={isCollapsed ? item.label : undefined}
               >

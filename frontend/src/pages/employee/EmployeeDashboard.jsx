@@ -234,22 +234,22 @@ export const EmployeeDashboard = () => {
         </div>
 
         {/* Floating Check-In / Check-Out Widget */}
-        <Card className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white border-none shadow-md overflow-hidden relative">
-          <div className="absolute right-0 top-0 translate-x-12 -translate-y-12 w-80 h-80 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
+        <Card className="bg-gradient-to-r from-indigo-50/80 via-white to-indigo-50/80 text-slate-900 border border-indigo-100 shadow-2xs overflow-hidden relative">
+          <div className="absolute right-0 top-0 translate-x-12 -translate-y-12 w-80 h-80 bg-indigo-200/30 rounded-full blur-3xl pointer-events-none" />
           <CardContent className="p-6 relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="space-y-2 text-center md:text-left">
               <div className="flex items-center justify-center md:justify-start gap-2">
-                <Badge variant="primary" size="sm" className="bg-indigo-500/30 text-indigo-200 border-indigo-400/30">
+                <Badge variant="primary" size="sm" className="bg-indigo-100 text-indigo-700 border-indigo-200">
                   <Clock className="w-3.5 h-3.5 mr-1" /> Daily Attendance Widget
                 </Badge>
-                <span className="text-xs text-slate-300 font-medium">
+                <span className="text-xs text-slate-500 font-medium">
                   {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })}
                 </span>
               </div>
-              <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-white">
+              <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900">
                 {isCheckedIn ? 'You are currently Checked In' : isCheckedOut ? 'Workday Completed' : 'Ready to start your workday?'}
               </h2>
-              <p className="text-xs sm:text-sm text-slate-300 max-w-xl">
+              <p className="text-xs sm:text-sm text-slate-600 max-w-xl">
                 {isCheckedIn
                   ? `Checked in at ${attendance?.checkInTime}. Remember to check out at the end of your shift.`
                   : isCheckedOut
@@ -259,9 +259,9 @@ export const EmployeeDashboard = () => {
             </div>
 
             {/* Check-In / Check-Out Action Buttons */}
-            <div className="shrink-0 bg-white/10 p-4 rounded-xl border border-white/10 backdrop-blur-xs flex flex-col items-center gap-3 text-center min-w-52">
+            <div className="shrink-0 bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs flex flex-col items-center gap-3 text-center min-w-52">
               <div className="flex items-center gap-2">
-                <span className="text-xs uppercase font-bold tracking-wider text-slate-300">Status:</span>
+                <span className="text-xs uppercase font-bold tracking-wider text-slate-500">Status:</span>
                 {isCheckedIn ? (
                   <Badge variant="success" size="md">Present</Badge>
                 ) : isCheckedOut ? (
@@ -309,8 +309,8 @@ export const EmployeeDashboard = () => {
               </div>
 
               {attendance?.checkInTime && attendance?.checkInTime !== '-' && (
-                <div className="text-[11px] text-slate-300 font-medium">
-                  Check-in Time: <strong className="text-white">{attendance.checkInTime}</strong>
+                <div className="text-[11px] text-slate-500 font-medium">
+                  Check-in Time: <strong className="text-slate-800">{attendance.checkInTime}</strong>
                 </div>
               )}
             </div>

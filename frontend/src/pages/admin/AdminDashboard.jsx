@@ -91,33 +91,33 @@ export const AdminDashboard = () => {
     >
       <div className="space-y-6">
         {/* Welcome Banner */}
-        <Card className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white border-none shadow-md overflow-hidden relative">
-          <div className="absolute right-0 top-0 translate-x-12 -translate-y-12 w-80 h-80 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
+        <Card className="bg-gradient-to-r from-indigo-50/80 via-white to-indigo-50/80 text-slate-900 border border-indigo-100 shadow-2xs overflow-hidden relative">
+          <div className="absolute right-0 top-0 translate-x-12 -translate-y-12 w-80 h-80 bg-indigo-200/30 rounded-full blur-3xl pointer-events-none" />
           <CardContent className="p-6 sm:p-8 relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <Badge variant="primary" size="sm" className="bg-indigo-500/30 text-indigo-200 border-indigo-400/30">
+                <Badge variant="primary" size="sm" className="bg-indigo-100 text-indigo-700 border-indigo-200">
                   <Shield className="w-3.5 h-3.5 mr-1" /> HR Command Center
                 </Badge>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
                 Welcome back, {currentUser?.fullName || 'Administrator'}!
               </h1>
-              <p className="text-xs sm:text-sm text-slate-300 max-w-xl">
+              <p className="text-xs sm:text-sm text-slate-600 max-w-xl">
                 Dayflow HR portal is active. You have {data?.pendingLeaves} pending leave requests waiting for your approval.
               </p>
             </div>
 
             {/* Quick Stats Banner Pill */}
-            <div className="shrink-0 bg-white/10 p-4 rounded-xl border border-white/10 backdrop-blur-xs flex items-center gap-4">
+            <div className="shrink-0 bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs flex items-center gap-4">
               <div className="text-center">
-                <span className="text-[10px] uppercase font-semibold text-slate-300 block">Total Workforce</span>
-                <span className="text-xl font-extrabold text-white">{data?.totalEmployees} Staff</span>
+                <span className="text-[10px] uppercase font-semibold text-slate-500 block">Total Workforce</span>
+                <span className="text-xl font-extrabold text-slate-900">{data?.totalEmployees} Staff</span>
               </div>
-              <div className="h-8 w-px bg-white/20" />
+              <div className="h-8 w-px bg-slate-200" />
               <div className="text-center">
-                <span className="text-[10px] uppercase font-semibold text-slate-300 block">Present Today</span>
-                <span className="text-xl font-extrabold text-emerald-400">{data?.presentToday} Present</span>
+                <span className="text-[10px] uppercase font-semibold text-slate-500 block">Present Today</span>
+                <span className="text-xl font-extrabold text-emerald-600">{data?.presentToday} Present</span>
               </div>
             </div>
           </CardContent>
