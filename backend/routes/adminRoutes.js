@@ -5,12 +5,12 @@ import {
   deleteUser,
 } from '../controllers/adminController.js';
 import { protect } from '../middleware/authMiddleware.js';
-import { authorizeRoles } from '../middleware/roleMiddleware.js';
+import { isAdmin } from '../middleware/roleMiddleware.js';
 
 const router = express.Router();
 
-// Apply protect & Admin authorization to all routes in admin router
-router.use(protect, authorizeRoles('Admin'));
+// Apply protect & isAdmin authorization to all routes in admin router
+router.use(protect, isAdmin);
 
 router.get('/dashboard', getAdminDashboard);
 router.get('/users', getAllUsers);

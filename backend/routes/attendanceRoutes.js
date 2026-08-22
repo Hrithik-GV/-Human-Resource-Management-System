@@ -6,13 +6,13 @@ import {
   getAllAttendance,
 } from '../controllers/attendanceController.js';
 import { protect } from '../middleware/authMiddleware.js';
-import { authorizeRoles } from '../middleware/roleMiddleware.js';
+import { isAdmin, isEmployee } from '../middleware/roleMiddleware.js';
 
 const router = express.Router();
 
-router.post('/checkin', protect, checkIn);
-router.post('/checkout', protect, checkOut);
-router.get('/my', protect, getMyAttendance);
-router.get('/all', protect, authorizeRoles('Admin'), getAllAttendance);
+router.post('/checkin', protect, isEmployee, checkIn);
+router.post('/checkout', protect, isEmployee, checkOut);
+router.get('/my', protect, isEmployee, getMyAttendance);
+router.get('/all', protect, isAdmin, getAllAttendance);
 
 export default router;

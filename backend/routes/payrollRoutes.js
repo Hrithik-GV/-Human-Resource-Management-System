@@ -5,12 +5,12 @@ import {
   updatePayroll,
 } from '../controllers/payrollController.js';
 import { protect } from '../middleware/authMiddleware.js';
-import { authorizeRoles } from '../middleware/roleMiddleware.js';
+import { isAdmin, isEmployee } from '../middleware/roleMiddleware.js';
 
 const router = express.Router();
 
-router.get('/my', protect, getMyPayroll);
-router.get('/', protect, authorizeRoles('Admin'), getAllPayrolls);
-router.put('/:id', protect, authorizeRoles('Admin'), updatePayroll);
+router.get('/my', protect, isEmployee, getMyPayroll);
+router.get('/', protect, isAdmin, getAllPayrolls);
+router.put('/:id', protect, isAdmin, updatePayroll);
 
 export default router;

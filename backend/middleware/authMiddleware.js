@@ -3,7 +3,8 @@ import asyncHandler from '../utils/asyncHandler.js';
 import User from '../models/User.js';
 
 /**
- * Authentication middleware to verify JWT tokens
+ * Authentication Middleware
+ * Reads JWT from Authorization header, verifies token, finds user in DB, and attaches to req.user (excluding password)
  */
 export const protect = asyncHandler(async (req, res, next) => {
   let token;
@@ -16,7 +17,7 @@ export const protect = asyncHandler(async (req, res, next) => {
       token = req.headers.authorization.split(' ')[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       
-      // Attach user object to request (excluding password)
+      // Attach user object excluding password
       req.user = await User.findById(decoded.id).select('-password');
 
       if (!req.user) {
@@ -27,7 +28,7 @@ export const protect = asyncHandler(async (req, res, next) => {
       next();
     } catch (error) {
       res.status(401);
-      throw new Error('Not authorized, token failed validation');
+      throw new Error('Not authorized, token failed or expired');
     }
   }
 
@@ -36,3 +37,5 @@ export const protect = asyncHandler(async (req, res, next) => {
     throw new Error('Not authorized, no token provided');
   }
 });
+
+export default protect;
